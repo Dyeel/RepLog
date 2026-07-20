@@ -1,61 +1,83 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { EmptyState, PrimaryButton, ScreenHeader } from '@/components/ui/form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
+import { WorkoutLogCard } from '@/components/workout-log-card';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useWorkoutStore } from '@/context/workout-store';
+import { getTodayDayOfWeek, isRestDay } from '@/lib/utils';
+import { DAY_LABELS } from '@/types';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+export default function TodayScreen() {
+  const { isReady, schedule, logs } = useWorkoutStore();
+  const today = getTodayDayOfWeek();
+  const todaySchedule = schedule.find((entry) => entry.day === today);
+  const todayLabel = todaySchedule?.label ?? 'Rest';
+  const resting = isRestDay(todayLabel);
+
+  const recentLogs = useMemo(() => logs.slice(0, 3), [logs]);
+
+  if (!isReady) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <ThemedView style={styles.centered}>
+        <ActivityIndicator />
+      </ThemedView>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
 
-export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+        <ScrollView contentContainerStyle={styles.content}>
+          <ScreenHeader title="RepLog" subtitle={`${DAY_LABELS[today]} · ${new Date().toLocaleDateString()}`} />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.todayCard}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Today
+            </ThemedText>
+            <ThemedText type="subtitle" style={styles.todayLabel}>
+              {todayLabel}
+            </ThemedText>
+            {resting ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                Rest day — recover and come back stronger.
+              </ThemedText>
+            ) : (
+              <ThemedText type="small" themeColor="textSecondary">
+                You&apos;re scheduled for {todayLabel.toLowerCase()} today.
+              </ThemedText>
+            )}
+            <PrimaryButton label="Log Workout" onPress={() => router.push('/log')} />
+          </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="smallBold">Recent Logs</ThemedText>
+              {logs.length > 0 ? (
+                <Pressable onPress={() => router.push('/history')}>
+                  <ThemedText type="linkPrimary">See all</ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
 
-        {Platform.OS === 'web' && <WebBadge />}
+            {recentLogs.length === 0 ? (
+              <EmptyState
+                title="No workouts yet"
+                message="Log your first exercise to start tracking progress."
+              />
+            ) : (
+              recentLogs.map((log) => (
+                <ThemedView key={log.id} type="backgroundElement" style={styles.logCardWrap}>
+                  <WorkoutLogCard log={log} onPress={() => router.push(`/history/${log.id}`)} />
+                </ThemedView>
+              ))
+            )}
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -64,35 +86,42 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  content: {
+    padding: Spacing.four,
     gap: Spacing.four,
+    paddingBottom: BottomTabInset + Spacing.four,
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    width: '100%',
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
+  todayCard: {
+    gap: Spacing.two,
+    padding: Spacing.four,
     borderRadius: Spacing.four,
+  },
+  todayLabel: {
+    fontSize: 36,
+    lineHeight: 42,
+  },
+  section: {
+    gap: Spacing.two,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  logCardWrap: {
+    borderRadius: Spacing.three,
+    overflow: 'hidden',
   },
 });
