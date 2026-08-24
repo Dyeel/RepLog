@@ -1,9 +1,7 @@
-/**
- * RepLog uses a fixed dark theme to match the product design.
- */
+import { THEME_PALETTES, ThemeDefinition } from '@/constants/theme';
+import { useWorkoutStore } from '@/context/workout-store';
 
-import { Colors } from '@/constants/theme';
-
-export function useTheme() {
-  return Colors.dark;
+export function useTheme(): ThemeDefinition {
+  const { themeId } = useWorkoutStore();
+  return THEME_PALETTES[themeId] ?? THEME_PALETTES.emerald;
 }

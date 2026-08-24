@@ -1,6 +1,123 @@
 import '@/global.css';
-
 import { Platform } from 'react-native';
+
+import { ThemeId } from '@/types';
+
+export type ThemeDefinition = {
+  id: ThemeId;
+  name: string;
+  subtitle: string;
+  accent: string;
+  accentGlow: string;
+  accentMuted: string;
+  background: string;
+  card: string;
+  cardElevated: string;
+  cardBorder: string;
+  text: string;
+  textSecondary: string;
+  backgroundElement: string;
+  backgroundSelected: string;
+};
+
+export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
+  emerald: {
+    id: 'emerald',
+    name: 'Stealth Emerald',
+    subtitle: 'Cyberpunk Gym · Cyber Green',
+    accent: '#10B981',
+    accentGlow: '#34D399',
+    accentMuted: 'rgba(16, 185, 129, 0.14)',
+    background: '#050507',
+    card: '#111216',
+    cardElevated: '#17181E',
+    cardBorder: 'rgba(255, 255, 255, 0.07)',
+    text: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    backgroundElement: '#111216',
+    backgroundSelected: '#17181E',
+  },
+  cobalt: {
+    id: 'cobalt',
+    name: 'Electric Cobalt',
+    subtitle: 'High Voltage · Hyper Blue',
+    accent: '#3B82F6',
+    accentGlow: '#60A5FA',
+    accentMuted: 'rgba(59, 130, 246, 0.14)',
+    background: '#040711',
+    card: '#0C1220',
+    cardElevated: '#131C30',
+    cardBorder: 'rgba(59, 130, 246, 0.12)',
+    text: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    backgroundElement: '#0C1220',
+    backgroundSelected: '#131C30',
+  },
+  violet: {
+    id: 'violet',
+    name: 'Neon Violet',
+    subtitle: 'Synthwave · Cyber Purple',
+    accent: '#A855F7',
+    accentGlow: '#C084FC',
+    accentMuted: 'rgba(168, 85, 247, 0.14)',
+    background: '#08040F',
+    card: '#140C22',
+    cardElevated: '#1D1232',
+    cardBorder: 'rgba(168, 85, 247, 0.12)',
+    text: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    backgroundElement: '#140C22',
+    backgroundSelected: '#1D1232',
+  },
+  amber: {
+    id: 'amber',
+    name: 'Solar Amber',
+    subtitle: 'Forge & Iron · Gold Energy',
+    accent: '#F59E0B',
+    accentGlow: '#FBBF24',
+    accentMuted: 'rgba(245, 158, 11, 0.14)',
+    background: '#0A0704',
+    card: '#161009',
+    cardElevated: '#21180E',
+    cardBorder: 'rgba(245, 158, 11, 0.12)',
+    text: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    backgroundElement: '#161009',
+    backgroundSelected: '#21180E',
+  },
+  crimson: {
+    id: 'crimson',
+    name: 'Crimson Beast',
+    subtitle: 'Aggressive Red · PR Mode',
+    accent: '#EF4444',
+    accentGlow: '#F87171',
+    accentMuted: 'rgba(239, 68, 68, 0.14)',
+    background: '#0A0404',
+    card: '#160B0B',
+    cardElevated: '#221111',
+    cardBorder: 'rgba(239, 68, 68, 0.12)',
+    text: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    backgroundElement: '#160B0B',
+    backgroundSelected: '#221111',
+  },
+  platinum: {
+    id: 'platinum',
+    name: 'Monochrome Platinum',
+    subtitle: 'Executive Titanium · Clean White',
+    accent: '#F8FAFC',
+    accentGlow: '#FFFFFF',
+    accentMuted: 'rgba(255, 255, 255, 0.14)',
+    background: '#080808',
+    card: '#141414',
+    cardElevated: '#1E1E1E',
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
+    text: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    backgroundElement: '#141414',
+    backgroundSelected: '#1E1E1E',
+  },
+};
 
 export const Brand = {
   // Pure Stealth Monochrome Palette

@@ -95,6 +95,14 @@ export type ScheduleDay = {
   label: string;
 };
 
+export type ThemeId =
+  | 'emerald'
+  | 'cobalt'
+  | 'violet'
+  | 'amber'
+  | 'crimson'
+  | 'platinum';
+
 export type AppData = {
   logs: WorkoutLog[];
   sessions: FullWorkoutSession[];
@@ -106,6 +114,7 @@ export type AppData = {
   schedule: ScheduleDay[];
   hasOnboarded: boolean;
   unitPreference: WeightUnit;
+  themeId?: ThemeId;
 };
 
 export type OneRepMaxData = {

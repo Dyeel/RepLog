@@ -3,8 +3,11 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Platform } from 'react-native';
 
 import { Brand } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function TabsLayout() {
+  const theme = useTheme();
+
   return (
     <Tabs
       screenOptions={{
@@ -18,7 +21,7 @@ export default function TabsLayout() {
           paddingBottom: Platform.select({ ios: 28, default: 12 }),
           paddingTop: 8,
         },
-        tabBarActiveTintColor: Brand.emerald,
+        tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: Brand.textSecondary,
         tabBarLabelStyle: {
           fontSize: 11,

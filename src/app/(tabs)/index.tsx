@@ -14,7 +14,12 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VolumeChart } from '@/components/analytics/volume-chart';
-import { AnimatedTabScreen, GradientButton, PulsingDot } from '@/components/ui';
+import {
+  AnimatedTabScreen,
+  GradientButton,
+  PulsingDot,
+  ThemeCustomizerModal,
+} from '@/components/ui';
 import { RecentSessionCard, WeeklyScheduleStrip } from '@/components/schedule';
 import { BottomTabInset, Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
@@ -37,6 +42,9 @@ export default function HomeScreen() {
   const todayLabel = todaySchedule?.label ?? 'Rest';
   const isRest = todayLabel.toLowerCase() === 'rest';
   const splitColor = getSplitBadgeColor(todayLabel);
+
+  // Theme customizer modal
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Active workout timer
   const [elapsedText, setElapsedText] = useState('');
@@ -87,18 +95,26 @@ export default function HomeScreen() {
                 <Text style={styles.headline}>RepLog</Text>
               </View>
 
-              <Pressable
-                onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
-                style={({ pressed }) => [styles.quickLogBtn, pressed && styles.pressed]}>
-                <MaterialCommunityIcons
-                  name={activeSession ? 'play-circle' : 'plus'}
-                  size={18}
-                  color="#050507"
-                />
-                <Text style={styles.quickLogText}>
-                  {activeSession ? 'Resume Workout' : 'Start Workout'}
-                </Text>
-              </Pressable>
+              <View style={styles.headerRightActions}>
+                <Pressable
+                  onPress={() => setIsThemeModalOpen(true)}
+                  style={({ pressed }) => [styles.themeIconBtn, pressed && styles.pressed]}>
+                  <MaterialCommunityIcons name="palette-outline" size={20} color={Brand.emerald} />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
+                  style={({ pressed }) => [styles.quickLogBtn, pressed && styles.pressed]}>
+                  <MaterialCommunityIcons
+                    name={activeSession ? 'play-circle' : 'plus'}
+                    size={18}
+                    color="#050507"
+                  />
+                  <Text style={styles.quickLogText}>
+                    {activeSession ? 'Resume Workout' : 'Start Workout'}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             {/* Active Workout in Progress Banner */}
@@ -246,6 +262,12 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
         </AnimatedTabScreen>
+
+        {/* Theme Customizer Modal Studio */}
+        <ThemeCustomizerModal
+          visible={isThemeModalOpen}
+          onClose={() => setIsThemeModalOpen(false)}
+        />
       </SafeAreaView>
     </View>
   );
@@ -275,6 +297,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  themeIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Brand.cardElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
   },
   dateText: {
     color: Brand.textSecondary,

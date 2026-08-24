@@ -21,6 +21,7 @@ import {
   FullWorkoutSession,
   MuscleGroup,
   ScheduleDay,
+  ThemeId,
   WeightUnit,
   WorkoutExercise,
   WorkoutFrequency,
@@ -41,6 +42,7 @@ type WorkoutStore = {
   frequency: WorkoutFrequency;
   schedule: ScheduleDay[];
   unitPreference: WeightUnit;
+  themeId: ThemeId;
   stats: {
     totalSessions: number;
     thisWeekWorkouts: number;
@@ -75,6 +77,7 @@ type WorkoutStore = {
   setFrequency: (frequency: WorkoutFrequency) => Promise<void>;
   updateScheduleDay: (day: DayOfWeek, label: string) => Promise<void>;
   setUnitPreference: (unit: WeightUnit) => Promise<void>;
+  setThemeId: (themeId: ThemeId) => Promise<void>;
   completeOnboarding: (prefs?: { unit?: WeightUnit; frequency?: WorkoutFrequency }) => Promise<void>;
   getExerciseSuggestions: (query: string) => string[];
 };
@@ -364,6 +367,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [data, persist],
   );
 
+  const setThemeId = useCallback(
+    async (themeId: ThemeId) => {
+      const current = data ?? (await loadAppData());
+      const next: AppData = { ...current, themeId };
+      await persist(next);
+    },
+    [data, persist],
+  );
+
   const completeOnboarding = useCallback(
     async (prefs?: { unit?: WeightUnit; frequency?: WorkoutFrequency }) => {
       const current = data ?? (await loadAppData());
@@ -409,6 +421,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       frequency: data?.frequency ?? 3,
       schedule: data?.schedule ?? buildSchedule(3),
       unitPreference: data?.unitPreference ?? 'kg',
+      themeId: data?.themeId ?? 'emerald',
       stats,
       addLog,
       addFullSession,
@@ -422,27 +435,29 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setFrequency,
       updateScheduleDay,
       setUnitPreference,
+      setThemeId,
       completeOnboarding,
       getExerciseSuggestions,
     }),
     [
-      addBodyWeightLog,
-      addCustomExercise,
-      addFullSession,
-      addLog,
-      allExercises,
-      clearActiveSession,
-      completeOnboarding,
       data,
+      allExercises,
+      stats,
+      addLog,
+      addFullSession,
+      saveActiveSession,
+      clearActiveSession,
+      addBodyWeightLog,
       deleteBodyWeightLog,
       deleteLog,
       deleteSessionByDate,
-      getExerciseSuggestions,
-      saveActiveSession,
+      addCustomExercise,
       setFrequency,
-      setUnitPreference,
-      stats,
       updateScheduleDay,
+      setUnitPreference,
+      setThemeId,
+      completeOnboarding,
+      getExerciseSuggestions,
     ],
   );
 
