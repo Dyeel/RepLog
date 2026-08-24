@@ -1,7 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
+import { Brand, Radius, Shadows, Spacing, getSplitBadgeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { WeightUnit } from '@/types';
 
 type RecentSessionCardProps = {
@@ -25,6 +26,7 @@ export function RecentSessionCard({
   onPress,
   onDelete,
 }: RecentSessionCardProps) {
+  const theme = useTheme();
   const badgeStyle = getSplitBadgeColor(title);
 
   return (
@@ -48,21 +50,21 @@ export function RecentSessionCard({
         <View style={styles.statsRow}>
           {exerciseCount !== undefined && (
             <View style={styles.statItem}>
-              <MaterialCommunityIcons name="dumbbell" size={14} color={Brand.textMuted} />
+              <MaterialCommunityIcons name="dumbbell" size={14} color={theme.accent} />
               <Text style={styles.statText}>{exerciseCount} Movements</Text>
             </View>
           )}
 
           {totalSets !== undefined && (
             <View style={styles.statItem}>
-              <MaterialCommunityIcons name="repeat" size={14} color={Brand.textMuted} />
+              <MaterialCommunityIcons name="repeat" size={14} color={Brand.textSecondary} />
               <Text style={styles.statText}>{totalSets} Sets</Text>
             </View>
           )}
 
           {totalVolume !== undefined && totalVolume > 0 && (
             <View style={styles.statItem}>
-              <MaterialCommunityIcons name="weight-kilogram" size={14} color={Brand.textMuted} />
+              <MaterialCommunityIcons name="weight-kilogram" size={14} color={Brand.textSecondary} />
               <Text style={styles.statText}>
                 {totalVolume.toLocaleString()} {unit}
               </Text>
@@ -82,7 +84,7 @@ export function RecentSessionCard({
             <MaterialCommunityIcons name="trash-can-outline" size={16} color={Brand.danger} />
           </Pressable>
         )}
-        <MaterialCommunityIcons name="chevron-right" size={22} color={Brand.textMuted} />
+        <MaterialCommunityIcons name="chevron-right" size={20} color={Brand.textMuted} />
       </View>
     </Pressable>
   );
@@ -91,19 +93,20 @@ export function RecentSessionCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: Brand.cardBorder,
+    ...Shadows.card,
   },
   cardPressed: {
     backgroundColor: Brand.cardElevated,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    transform: [{ scale: 0.99 }],
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    transform: [{ scale: 0.985 }],
   },
   content: {
     gap: Spacing.two,
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: Spacing.two,
     paddingVertical: 4,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.xs,
     borderWidth: 1,
   },
   badgeText: {
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
   dateLabel: {
     color: Brand.textSecondary,
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   statsRow: {
     flexDirection: 'row',
@@ -144,7 +147,7 @@ const styles = StyleSheet.create({
   statText: {
     color: Brand.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   rightActions: {
@@ -155,6 +158,6 @@ const styles = StyleSheet.create({
   deleteBtn: {
     padding: 6,
     borderRadius: Radius.xs,
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
 });

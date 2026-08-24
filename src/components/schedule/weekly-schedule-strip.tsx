@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
+import { Brand, Radius, Shadows, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getScheduleAbbreviation } from '@/lib/utils';
 import { DAY_SHORT_LABELS, DayOfWeek, ScheduleDay } from '@/types';
@@ -82,11 +82,12 @@ export function WeeklyScheduleStrip({ schedule, activeDay }: WeeklyScheduleStrip
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
     gap: Spacing.three,
+    ...Shadows.card,
   },
   header: {
     flexDirection: 'row',

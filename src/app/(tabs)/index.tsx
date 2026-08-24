@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VolumeChart } from '@/components/analytics/volume-chart';
@@ -20,7 +19,7 @@ import {
   PulsingDot,
 } from '@/components/ui';
 import { RecentSessionCard, WeeklyScheduleStrip } from '@/components/schedule';
-import { BottomTabInset, Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
+import { BottomTabInset, Brand, Radius, Shadows, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { formatHeaderDate, getTodayDayOfWeek } from '@/lib/utils';
@@ -86,7 +85,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <AnimatedTabScreen>
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-            {/* Header Row */}
+            {/* Top Header Row */}
             <View style={styles.header}>
               <View>
                 <Text style={styles.dateText}>{formatHeaderDate()}</Text>
@@ -97,7 +96,10 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
                 style={({ pressed }) => [
                   styles.quickLogBtn,
-                  { backgroundColor: theme.accent },
+                  {
+                    backgroundColor: theme.accent,
+                    shadowColor: theme.accent,
+                  },
                   pressed && styles.pressed,
                 ]}>
                 <MaterialCommunityIcons
@@ -106,52 +108,73 @@ export default function HomeScreen() {
                   color="#050507"
                 />
                 <Text style={styles.quickLogText}>
-                  {activeSession ? 'Resume Workout' : 'Start Workout'}
+                  {activeSession ? 'Resume' : 'Quick Log'}
                 </Text>
               </Pressable>
             </View>
 
             {/* Active Workout in Progress Banner */}
             {activeSession && (
-              <View>
-                <Pressable
-                  onPress={() => router.push('/log')}
-                  style={({ pressed }) => [
-                    styles.activeSessionBanner,
-                    { borderColor: `${theme.accent}60`, backgroundColor: `${theme.accent}08` },
-                    pressed && styles.pressed,
-                  ]}>
-                  <View style={styles.activeBannerLeft}>
-                    <PulsingDot size={8} color={theme.accent} />
-                    <View style={styles.activeTextCol}>
-                      <Text style={[styles.activeBannerTitle, { color: theme.accent }]}>
-                        WORKOUT IN PROGRESS
-                      </Text>
-                      <Text style={styles.activeBannerSubtitle}>
-                        {activeSession.title} · {activeSession.exercises.length}{' '}
-                        {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
-                      </Text>
-                    </View>
+              <Pressable
+                onPress={() => router.push('/log')}
+                style={({ pressed }) => [
+                  styles.activeSessionBanner,
+                  {
+                    borderColor: `${theme.accent}60`,
+                    backgroundColor: `${theme.accent}10`,
+                    shadowColor: theme.accent,
+                  },
+                  pressed && styles.pressed,
+                ]}>
+                <View style={styles.activeBannerLeft}>
+                  <PulsingDot size={9} color={theme.accent} />
+                  <View style={styles.activeTextCol}>
+                    <Text style={[styles.activeBannerTitle, { color: theme.accent }]}>
+                      WORKOUT IN PROGRESS
+                    </Text>
+                    <Text style={styles.activeBannerSubtitle}>
+                      {activeSession.title} · {activeSession.exercises.length}{' '}
+                      {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
+                    </Text>
                   </View>
+                </View>
 
-                  <View style={styles.activeBannerRight}>
-                    <Text style={[styles.activeTimerText, { color: theme.accent }]}>{elapsedText}</Text>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={theme.accent} />
-                  </View>
-                </Pressable>
-              </View>
+                <View style={styles.activeBannerRight}>
+                  <Text style={[styles.activeTimerText, { color: theme.accent }]}>{elapsedText}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={theme.accent} />
+                </View>
+              </Pressable>
             )}
 
-            {/* Today's Focus Card */}
-            <View style={styles.heroCard}>
+            {/* Elevated Hero Workout Card */}
+            <View
+              style={[
+                styles.heroCard,
+                {
+                  borderColor: isRest ? Brand.cardBorder : `${theme.accent}40`,
+                  shadowColor: isRest ? 'transparent' : theme.accent,
+                },
+              ]}>
               <View style={styles.heroHeader}>
                 <View style={styles.heroTagRow}>
                   <View
                     style={[
                       styles.splitBadge,
-                      { backgroundColor: splitColor.bg, borderColor: splitColor.border },
+                      {
+                        backgroundColor: isRest ? splitColor.bg : `${theme.accent}20`,
+                        borderColor: isRest ? splitColor.border : theme.accent,
+                      },
                     ]}>
-                    <Text style={[styles.splitBadgeText, { color: splitColor.text }]}>
+                    <MaterialCommunityIcons
+                      name={isRest ? 'coffee-outline' : 'lightning-bolt'}
+                      size={14}
+                      color={isRest ? splitColor.text : theme.accent}
+                    />
+                    <Text
+                      style={[
+                        styles.splitBadgeText,
+                        { color: isRest ? splitColor.text : theme.accent },
+                      ]}>
                       {todayLabel.toUpperCase()} DAY
                     </Text>
                   </View>
@@ -160,8 +183,8 @@ export default function HomeScreen() {
 
                 <Text style={styles.heroSubtitle}>
                   {isRest
-                    ? 'Scheduled rest day. Prioritize nutrition & sleep.'
-                    : 'Time to track your multi-exercise session and progressive overload.'}
+                    ? 'Scheduled recovery day. Hydrate, optimize protein, and rest muscle fibers.'
+                    : 'Time to dominate today’s training block with targeted progressive overload.'}
                 </Text>
               </View>
 
@@ -170,7 +193,7 @@ export default function HomeScreen() {
                   activeSession
                     ? 'Resume Active Workout'
                     : isRest
-                    ? 'Log Workout Anyway'
+                    ? 'Log Extra Workout'
                     : `Start ${todayLabel} Workout`
                 }
                 icon={<MaterialCommunityIcons name="dumbbell" size={18} color="#050507" />}
@@ -179,11 +202,16 @@ export default function HomeScreen() {
               />
             </View>
 
-            {/* Performance & Compliance Strip */}
+            {/* Performance & Compliance KPI Cards (3-Grid with Top-Glow Depth) */}
             <View style={styles.statsStrip}>
-              {/* Metric 1: Weekly Goal */}
-              <View style={styles.statCard}>
-                <View style={styles.statIconBadge}>
+              {/* Metric 1: Weekly Target */}
+              <View style={[styles.statCard, { borderColor: Brand.cardBorder }]}>
+                <View style={[styles.statTopLine, { backgroundColor: theme.accent }]} />
+                <View
+                  style={[
+                    styles.statIconBadge,
+                    { backgroundColor: `${theme.accent}15`, borderColor: `${theme.accent}30` },
+                  ]}>
                   <MaterialCommunityIcons name="target" size={14} color={theme.accent} />
                 </View>
                 <Text style={styles.statValue}>
@@ -194,8 +222,13 @@ export default function HomeScreen() {
               </View>
 
               {/* Metric 2: Total Sets */}
-              <View style={styles.statCard}>
-                <View style={styles.statIconBadge}>
+              <View style={[styles.statCard, { borderColor: Brand.cardBorder }]}>
+                <View style={[styles.statTopLine, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]} />
+                <View
+                  style={[
+                    styles.statIconBadge,
+                    { backgroundColor: 'rgba(255, 255, 255, 0.06)', borderColor: Brand.cardBorder },
+                  ]}>
                   <MaterialCommunityIcons name="repeat" size={14} color={Brand.textSecondary} />
                 </View>
                 <Text style={styles.statValue}>{stats.totalSets}</Text>
@@ -203,9 +236,18 @@ export default function HomeScreen() {
               </View>
 
               {/* Metric 3: Volume */}
-              <View style={styles.statCard}>
-                <View style={styles.statIconBadge}>
-                  <MaterialCommunityIcons name="weight-kilogram" size={14} color={Brand.textSecondary} />
+              <View style={[styles.statCard, { borderColor: Brand.cardBorder }]}>
+                <View style={[styles.statTopLine, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]} />
+                <View
+                  style={[
+                    styles.statIconBadge,
+                    { backgroundColor: 'rgba(255, 255, 255, 0.06)', borderColor: Brand.cardBorder },
+                  ]}>
+                  <MaterialCommunityIcons
+                    name="weight-kilogram"
+                    size={14}
+                    color={Brand.textSecondary}
+                  />
                 </View>
                 <Text style={styles.statValue}>
                   {stats.totalVolume > 9999
@@ -228,7 +270,9 @@ export default function HomeScreen() {
                 <Text style={styles.sectionLabel}>RECENT WORKOUT SESSIONS</Text>
                 {recentSessions.length > 0 && (
                   <Pressable onPress={() => router.push('/(tabs)/history')}>
-                    <Text style={styles.seeAllText}>View All ({logs.length})</Text>
+                    <Text style={[styles.seeAllText, { color: theme.accent }]}>
+                      View All ({logs.length})
+                    </Text>
                   </Pressable>
                 )}
               </View>
@@ -292,21 +336,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerRightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  themeIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Brand.cardElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-  },
   dateText: {
     color: Brand.textSecondary,
     fontSize: 12,
@@ -316,33 +345,38 @@ const styles = StyleSheet.create({
   },
   headline: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   quickLogBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: Brand.emerald,
+    gap: 5,
     paddingHorizontal: Spacing.three,
     paddingVertical: 8,
     borderRadius: Radius.pill,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   quickLogText: {
     color: '#050507',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
   activeSessionBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.three,
     borderWidth: 1.5,
-    borderColor: 'rgba(16, 185, 129, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
   },
   activeBannerLeft: {
     flexDirection: 'row',
@@ -355,8 +389,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activeBannerTitle: {
-    color: Brand.emerald,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -371,18 +404,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   activeTimerText: {
-    color: Brand.emerald,
     fontSize: 14,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   heroCard: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.four,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Brand.cardBorder,
     gap: Spacing.three,
+    ...Shadows.cardElevated,
   },
   heroHeader: {
     gap: Spacing.two,
@@ -393,15 +426,18 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   splitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: Spacing.two,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: Radius.sm,
     borderWidth: 1,
   },
   splitBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   restTag: {
     color: Brand.textMuted,
@@ -420,21 +456,30 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: Brand.card,
-    borderRadius: Radius.md,
+    borderRadius: Radius.xl,
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.two,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Brand.cardBorder,
+    position: 'relative',
+    overflow: 'hidden',
     gap: 2,
+    ...Shadows.card,
+  },
+  statTopLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2.5,
   },
   statIconBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Brand.cardElevated,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
     marginBottom: 2,
   },
   statValue: {
@@ -469,13 +514,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   seeAllText: {
-    color: Brand.emerald,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   emptyCard: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.five,
     alignItems: 'center',
     justifyContent: 'center',

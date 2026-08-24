@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Brand, Radius, Spacing } from '@/constants/theme';
+import { Brand, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { DAYS_OF_WEEK, DAY_SHORT_LABELS, WeightUnit, WorkoutLog } from '@/types';
 
@@ -76,7 +76,10 @@ export function VolumeChart({ logs, unit }: VolumeChartProps) {
                   style={[
                     styles.barFill,
                     { height: `${heightPct}%` },
-                    hasActivity && { backgroundColor: theme.accent },
+                    hasActivity && {
+                      backgroundColor: theme.accent,
+                      shadowColor: theme.accent,
+                    },
                   ]}
                 />
               </View>
@@ -98,11 +101,12 @@ export function VolumeChart({ logs, unit }: VolumeChartProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.four,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
     gap: Spacing.three,
+    ...Shadows.card,
   },
   header: {
     flexDirection: 'row',

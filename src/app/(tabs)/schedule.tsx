@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WeeklyScheduleStrip } from '@/components/schedule';
 import { AnimatedTabScreen } from '@/components/ui';
-import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, Brand, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getDefaultSplit } from '@/lib/defaults';
@@ -64,16 +64,21 @@ export default function ScheduleScreen() {
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.title}>Split Architecture</Text>
-              <Text style={styles.subtitle}>Customize weekly training allocation</Text>
+              <Text style={styles.sectionTag}>ROUTINE ARCHITECTURE</Text>
+              <Text style={styles.title}>Schedule</Text>
+              <Text style={styles.subtitle}>Customize weekly training allocation & splits</Text>
             </View>
 
             {/* 7-Day Visual Strip */}
             <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
 
-            {/* Frequency Selector */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>TRAINING FREQUENCY</Text>
+            {/* Frequency Selector Card */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderRow}>
+                <MaterialCommunityIcons name="calendar-sync" size={16} color={theme.accent} />
+                <Text style={styles.sectionLabel}>TRAINING FREQUENCY</Text>
+              </View>
+
               <View style={styles.frequencyRow}>
                 {FREQUENCIES.map((option) => {
                   const selected = frequency === option;
@@ -85,7 +90,11 @@ export default function ScheduleScreen() {
                         styles.frequencyButton,
                         selected && [
                           styles.frequencyButtonSelected,
-                          { backgroundColor: theme.accent, borderColor: theme.accent },
+                          {
+                            backgroundColor: theme.accent,
+                            borderColor: theme.accent,
+                            shadowColor: theme.accent,
+                          },
                         ],
                         pressed && styles.pressed,
                       ]}>
@@ -102,19 +111,22 @@ export default function ScheduleScreen() {
               </View>
 
               <View style={styles.presetNotice}>
-                <MaterialCommunityIcons name="information-outline" size={15} color={Brand.textMuted} />
+                <MaterialCommunityIcons name="information-outline" size={14} color={Brand.textMuted} />
                 <Text style={styles.helper}>
                   {Object.entries(defaultSplit)
                     .filter(([, label]) => label !== 'Rest')
-                    .map(([day, label]) => `${DAY_LABELS[day as keyof typeof DAY_LABELS].slice(0, 3)}: ${label}`)
+                    .map(
+                      ([day, label]) =>
+                        `${DAY_LABELS[day as keyof typeof DAY_LABELS].slice(0, 3)}: ${label}`,
+                    )
                     .join(' · ')}
                 </Text>
               </View>
             </View>
 
-            {/* Day-by-Day Editor */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>CUSTOMIZE SCHEDULE</Text>
+            {/* Day-by-Day Split Cards */}
+            <View style={styles.daysSection}>
+              <Text style={styles.sectionLabel}>WEEKLY SPLIT BREAKDOWN</Text>
 
               <View style={styles.daysList}>
                 {DAYS_OF_WEEK.map((day) => {
@@ -132,11 +144,16 @@ export default function ScheduleScreen() {
                         isToday && [
                           styles.dayCardToday,
                           {
-                            borderColor: theme.accent,
-                            backgroundColor: `${theme.accent}08`,
+                            borderColor: `${theme.accent}70`,
+                            backgroundColor: `${theme.accent}0a`,
+                            shadowColor: theme.accent,
                           },
                         ],
                       ]}>
+                      {isToday && (
+                        <View style={[styles.todayIndicatorBar, { backgroundColor: theme.accent }]} />
+                      )}
+
                       <View style={styles.dayHeader}>
                         <View style={styles.dayTitleRow}>
                           <Text
@@ -147,26 +164,31 @@ export default function ScheduleScreen() {
                             {DAY_LABELS[day]}
                           </Text>
                           {isToday && (
-                            <Text
-                              style={[
-                                styles.todayIndicator,
-                                { backgroundColor: theme.accent },
-                              ]}>
-                              TODAY
-                            </Text>
+                            <View style={[styles.todayBadgePill, { backgroundColor: theme.accent }]}>
+                              <Text style={styles.todayBadgeText}>TODAY</Text>
+                            </View>
                           )}
                         </View>
 
                         <Pressable
                           onPress={() => setEditingDay(isEditing ? null : day)}
-                          style={[styles.labelBadge, isRest && styles.labelBadgeRest]}>
-                          <Text style={[styles.labelBadgeText, isRest && styles.labelBadgeTextRest]}>
+                          style={[
+                            styles.labelBadge,
+                            isRest ? styles.labelBadgeRest : { borderColor: `${theme.accent}30` },
+                            !isRest && { backgroundColor: Brand.cardElevated },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.labelBadgeText,
+                              isRest && styles.labelBadgeTextRest,
+                              !isRest && isToday && { color: '#FFFFFF' },
+                            ]}>
                             {label}
                           </Text>
                           <MaterialCommunityIcons
                             name={isEditing ? 'chevron-up' : 'pencil-outline'}
                             size={14}
-                            color={isRest ? Brand.textMuted : '#FFFFFF'}
+                            color={isRest ? Brand.textMuted : theme.accent}
                           />
                         </Pressable>
                       </View>
@@ -174,7 +196,7 @@ export default function ScheduleScreen() {
                       {/* Tag Options Dropdown */}
                       {isEditing && (
                         <View style={styles.labelPicker}>
-                          <Text style={styles.pickerTitle}>Target focus for {DAY_LABELS[day]}:</Text>
+                          <Text style={styles.pickerTitle}>Select focus for {DAY_LABELS[day]}:</Text>
                           <View style={styles.optionsWrap}>
                             {WORKOUT_LABELS.map((option) => {
                               const isSelected = label === option;
@@ -189,7 +211,10 @@ export default function ScheduleScreen() {
                                     styles.labelOption,
                                     isSelected && [
                                       styles.labelOptionActive,
-                                      { backgroundColor: theme.accent, borderColor: theme.accent },
+                                      {
+                                        backgroundColor: theme.accent,
+                                        borderColor: theme.accent,
+                                      },
                                     ],
                                     pressed && styles.pressed,
                                   ]}>
@@ -241,9 +266,15 @@ const styles = StyleSheet.create({
   header: {
     gap: 2,
   },
+  sectionTag: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
   title: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
@@ -251,8 +282,19 @@ const styles = StyleSheet.create({
     color: Brand.textSecondary,
     fontSize: 13,
   },
-  section: {
-    gap: Spacing.two,
+  sectionCard: {
+    backgroundColor: Brand.card,
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
+    gap: Spacing.three,
+    ...Shadows.card,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   sectionLabel: {
     color: Brand.textMuted,
@@ -266,16 +308,18 @@ const styles = StyleSheet.create({
   },
   frequencyButton: {
     flex: 1,
-    backgroundColor: Brand.card,
-    borderRadius: Radius.md,
+    backgroundColor: Brand.cardElevated,
+    borderRadius: Radius.lg,
     paddingVertical: Spacing.three,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Brand.cardBorder,
   },
   frequencyButtonSelected: {
-    backgroundColor: Brand.emerald,
-    borderColor: Brand.emerald,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   frequencyText: {
     color: Brand.textSecondary,
@@ -290,27 +334,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: Spacing.one,
   },
   helper: {
     color: Brand.textMuted,
     fontSize: 11,
     flex: 1,
   },
+  daysSection: {
+    gap: Spacing.two,
+  },
   daysList: {
     gap: Spacing.two,
   },
   dayCard: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
+    position: 'relative',
+    overflow: 'hidden',
     gap: Spacing.two,
+    ...Shadows.card,
+  },
+  todayIndicatorBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3.5,
   },
   dayCardToday: {
-    borderColor: Brand.emerald,
-    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
   dayHeader: {
     flexDirection: 'row',
@@ -327,30 +387,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  dayNameToday: {
-    color: Brand.emerald,
-    fontWeight: '800',
+  todayBadgePill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
   },
-  todayIndicator: {
-    backgroundColor: Brand.emerald,
+  todayBadgeText: {
     color: '#050507',
     fontSize: 9,
     fontWeight: '800',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.pill,
     letterSpacing: 0.5,
   },
   labelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Brand.cardElevated,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: Brand.cardBorder,
   },
   labelBadgeRest: {
     backgroundColor: 'transparent',
@@ -366,7 +421,7 @@ const styles = StyleSheet.create({
   },
   labelPicker: {
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     padding: Spacing.three,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
@@ -392,8 +447,10 @@ const styles = StyleSheet.create({
     borderColor: Brand.cardBorder,
   },
   labelOptionActive: {
-    backgroundColor: Brand.emerald,
-    borderColor: Brand.emerald,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
   },
   labelOptionText: {
     color: Brand.textSecondary,

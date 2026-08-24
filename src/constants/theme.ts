@@ -127,34 +127,56 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
 };
 
 export const Brand = {
-  // Pure Stealth Monochrome Palette
-  background: '#050507',
-  backgroundSecondary: '#0B0C0E',
-  card: '#111216',
-  cardElevated: '#17181E',
-  cardHighlight: '#1F2028',
+  // Deep Luxury Charcoal & OLED Palette
+  background: '#07080B',
+  backgroundSecondary: '#0D0F14',
+  card: '#10141C',
+  cardElevated: '#161B26',
+  cardHighlight: '#1F2636',
 
-  // Hairline borders
-  cardBorder: 'rgba(255, 255, 255, 0.07)',
-  cardBorderHover: 'rgba(255, 255, 255, 0.14)',
-  cardBorderFocus: 'rgba(255, 255, 255, 0.28)',
+  // Frosted hairline borders with depth
+  cardBorder: 'rgba(255, 255, 255, 0.08)',
+  cardBorderHover: 'rgba(255, 255, 255, 0.16)',
+  cardBorderFocus: 'rgba(255, 255, 255, 0.32)',
 
-  // Signature clean emerald & titanium accents (Single surgical accent)
+  // Signature clean emerald & titanium accents
   emerald: '#10B981',
-  emeraldMuted: 'rgba(16, 185, 129, 0.12)',
+  emeraldMuted: 'rgba(16, 185, 129, 0.14)',
   emeraldGlow: '#34D399',
 
-  // Pure monochrome text hierarchy
+  // Monochrome text hierarchy
   textPrimary: '#FFFFFF',
   textSecondary: '#94A3B8',
-  textMuted: '#525E70',
-  textSubtle: '#333D4B',
+  textMuted: '#64748B',
+  textSubtle: '#334155',
 
-  // Utility colors (used sparingly for functional status)
+  // Functional status colors
   danger: '#EF4444',
-  dangerMuted: 'rgba(239, 68, 68, 0.12)',
+  dangerMuted: 'rgba(239, 68, 68, 0.14)',
   amber: '#F59E0B',
-  amberMuted: 'rgba(245, 158, 11, 0.12)',
+  amberMuted: 'rgba(245, 158, 11, 0.14)',
+} as const;
+
+export const Shadows = {
+  card: {
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  cardElevated: {
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.32,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  glow: (color: string) => ({
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+  }),
 } as const;
 
 export const Colors = {
@@ -224,19 +246,19 @@ export const Radius = {
 export const BottomTabInset = Platform.select({ ios: 94, default: 78 }) ?? 78;
 export const MaxContentWidth = 800;
 
-// Unified disciplined monochrome split badge styling (No distracting rainbow colors)
+// Unified disciplined monochrome split badge styling
 export function getSplitBadgeColor(label: string): { bg: string; text: string; border: string } {
   const norm = label.toLowerCase();
   if (norm.includes('rest')) {
     return {
-      bg: 'rgba(255, 255, 255, 0.03)',
+      bg: 'rgba(255, 255, 255, 0.04)',
       text: Brand.textMuted,
-      border: 'rgba(255, 255, 255, 0.06)',
+      border: 'rgba(255, 255, 255, 0.08)',
     };
   }
   return {
-    bg: 'rgba(255, 255, 255, 0.06)',
+    bg: 'rgba(255, 255, 255, 0.08)',
     text: '#FFFFFF',
-    border: 'rgba(255, 255, 255, 0.12)',
+    border: 'rgba(255, 255, 255, 0.15)',
   };
 }

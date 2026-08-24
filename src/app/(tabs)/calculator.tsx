@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, Brand, Radius, Shadows, Spacing } from '@/constants/theme';
 import { AnimatedTabScreen } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { convertWeight } from '@/lib/utils';
@@ -555,9 +555,10 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.card,
     borderRadius: Radius.xl,
     padding: Spacing.four,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Brand.cardBorder,
     gap: Spacing.three,
+    ...Shadows.cardElevated,
   },
   unitInputBox: {
     backgroundColor: Brand.cardElevated,
@@ -568,8 +569,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   unitInputBoxActive: {
-    borderColor: Brand.emerald,
-    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+    borderWidth: 1.5,
   },
   unitInputHeader: {
     flexDirection: 'row',
@@ -577,15 +577,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   unitPill: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderRadius: Radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
   },
   unitPillText: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   unitPillSecondary: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -600,7 +599,7 @@ const styles = StyleSheet.create({
   },
   bigNumberInput: {
     color: '#FFFFFF',
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     padding: 0,
@@ -614,17 +613,16 @@ const styles = StyleSheet.create({
   swapLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   swapBadgeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: Brand.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
   },
   stepperSection: {
     gap: 8,
@@ -655,8 +653,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   stepperBtnPlus: {
-    borderColor: 'rgba(16, 185, 129, 0.2)',
-    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+    borderWidth: 1,
   },
   stepperBtnText: {
     color: Brand.textSecondary,
@@ -671,6 +668,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Brand.cardBorder,
     gap: Spacing.three,
+    ...Shadows.card,
   },
   sectionCardHeader: {
     flexDirection: 'row',
@@ -691,18 +689,17 @@ const styles = StyleSheet.create({
   benchmarkGridCard: {
     width: '48.5%',
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     padding: Spacing.three,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
     gap: 6,
   },
   benchmarkGridCardSelected: {
-    borderColor: Brand.emerald,
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderWidth: 1.5,
   },
   benchmarkCardTop: {
-    gap: 1,
+    gap: 2,
   },
   benchmarkTagText: {
     color: '#FFFFFF',
@@ -711,8 +708,7 @@ const styles = StyleSheet.create({
   },
   benchmarkSubText: {
     color: Brand.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
   },
   benchmarkValuesRow: {
     flexDirection: 'row',
@@ -720,21 +716,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 4,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
   },
   gridLbsText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
+    color: Brand.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   gridArrowText: {
     color: Brand.textMuted,
-    fontSize: 10,
+    fontSize: 12,
   },
   gridKgText: {
-    color: Brand.emerald,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -746,37 +741,36 @@ const styles = StyleSheet.create({
   dumbbellPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: Brand.cardElevated,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
   },
   dumbbellPillSelected: {
-    borderColor: Brand.emerald,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1.5,
   },
   dumbbellPillKg: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   dumbbellPillArrow: {
     color: Brand.textMuted,
-    fontSize: 10,
+    fontSize: 11,
   },
   dumbbellPillLbs: {
     color: Brand.textSecondary,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   dumbbellPillLbsSelected: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   formulaCard: {
     flexDirection: 'row',

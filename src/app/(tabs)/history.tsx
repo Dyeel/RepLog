@@ -12,18 +12,20 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecentSessionCard } from '@/components/schedule';
 import { AnimatedTabScreen } from '@/components/ui';
-import { Brand, BottomTabInset, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, Brand, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
+import { useTheme } from '@/hooks/use-theme';
 import { groupLogsIntoSessions } from '@/lib/workout-sessions';
 
 export default function HistoryScreen() {
   const { isReady, logs, schedule, unitPreference, deleteSessionByDate } = useWorkoutStore();
+  const theme = useTheme();
   const [filter, setFilter] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   const sessions = useMemo(() => {
     const all = groupLogsIntoSessions(logs, schedule, unitPreference);
@@ -56,7 +58,7 @@ export default function HistoryScreen() {
   if (!isReady) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={Brand.emerald} />
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
@@ -67,23 +69,34 @@ export default function HistoryScreen() {
       <SafeAreaView style={styles.safeArea}>
         <AnimatedTabScreen>
           <View style={styles.content}>
-            {/* Header */}
+            {/* Header with Activity Summary */}
             <View style={styles.header}>
               <View>
+                <Text style={styles.sectionTag}>ACTIVITY LOG</Text>
                 <Text style={styles.title}>History</Text>
                 <Text style={styles.subtitle}>
-                  {sessions.length} {sessions.length === 1 ? 'workout session' : 'workout sessions'} logged
+                  {sessions.length} {sessions.length === 1 ? 'workout session' : 'workout sessions'} recorded
                 </Text>
               </View>
             </View>
 
-            {/* Search Box */}
-            <View style={styles.searchBox}>
-              <MaterialCommunityIcons name="magnify" size={20} color={Brand.textMuted} />
+            {/* Elevated Search Box */}
+            <View
+              style={[
+                styles.searchBox,
+                isFocused && [styles.searchBoxFocused, { borderColor: theme.accent }],
+              ]}>
+              <MaterialCommunityIcons
+                name="magnify"
+                size={20}
+                color={isFocused ? theme.accent : Brand.textMuted}
+              />
               <TextInput
                 value={filter}
                 onChangeText={setFilter}
-                placeholder="Search movement or split..."
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder="Search exercise, muscle group, or split..."
                 placeholderTextColor={Brand.textMuted}
                 style={styles.searchInput}
               />
@@ -102,12 +115,13 @@ export default function HistoryScreen() {
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={styles.emptyCard}>
-                  <MaterialCommunityIcons
-                    name="history"
-                    size={44}
-                    color={Brand.textMuted}
-                    style={styles.emptyIcon}
-                  />
+                  <View
+                    style={[
+                      styles.emptyIconCircle,
+                      { backgroundColor: `${theme.accent}15`, borderColor: `${theme.accent}30` },
+                    ]}>
+                    <MaterialCommunityIcons name="history" size={32} color={theme.accent} />
+                  </View>
                   <Text style={styles.emptyTitle}>
                     {filter ? 'No matching workouts' : 'No history yet'}
                   </Text>
@@ -158,8 +172,14 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   header: {
-    gap: 4,
+    gap: 2,
     paddingTop: Spacing.two,
+  },
+  sectionTag: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   title: {
     color: '#FFFFFF',
@@ -169,25 +189,29 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: Brand.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Brand.card,
-    borderRadius: Radius.md,
+    borderRadius: Radius.xl,
     paddingHorizontal: Spacing.three,
     height: 48,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
     gap: Spacing.two,
+    ...Shadows.card,
+  },
+  searchBoxFocused: {
+    borderWidth: 1.5,
   },
   searchInput: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
   clearBtn: {
     padding: 4,
@@ -199,7 +223,7 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.six,
     alignItems: 'center',
     justifyContent: 'center',
@@ -207,8 +231,15 @@ const styles = StyleSheet.create({
     borderColor: Brand.cardBorder,
     gap: Spacing.two,
     marginTop: Spacing.four,
+    ...Shadows.card,
   },
-  emptyIcon: {
+  emptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
     marginBottom: Spacing.one,
   },
   emptyTitle: {
