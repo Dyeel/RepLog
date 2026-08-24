@@ -18,7 +18,6 @@ import {
   AnimatedTabScreen,
   GradientButton,
   PulsingDot,
-  ThemeCustomizerModal,
 } from '@/components/ui';
 import { RecentSessionCard, WeeklyScheduleStrip } from '@/components/schedule';
 import { BottomTabInset, Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
@@ -44,9 +43,6 @@ export default function HomeScreen() {
   const todayLabel = todaySchedule?.label ?? 'Rest';
   const isRest = todayLabel.toLowerCase() === 'rest';
   const splitColor = getSplitBadgeColor(todayLabel);
-
-  // Theme customizer modal
-  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Active workout timer
   const [elapsedText, setElapsedText] = useState('');
@@ -97,30 +93,22 @@ export default function HomeScreen() {
                 <Text style={styles.headline}>RepLog</Text>
               </View>
 
-              <View style={styles.headerRightActions}>
-                <Pressable
-                  onPress={() => setIsThemeModalOpen(true)}
-                  style={({ pressed }) => [styles.themeIconBtn, pressed && styles.pressed]}>
-                  <MaterialCommunityIcons name="palette-outline" size={20} color={theme.accent} />
-                </Pressable>
-
-                <Pressable
-                  onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
-                  style={({ pressed }) => [
-                    styles.quickLogBtn,
-                    { backgroundColor: theme.accent },
-                    pressed && styles.pressed,
-                  ]}>
-                  <MaterialCommunityIcons
-                    name={activeSession ? 'play-circle' : 'plus'}
-                    size={18}
-                    color="#050507"
-                  />
-                  <Text style={styles.quickLogText}>
-                    {activeSession ? 'Resume Workout' : 'Start Workout'}
-                  </Text>
-                </Pressable>
-              </View>
+              <Pressable
+                onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
+                style={({ pressed }) => [
+                  styles.quickLogBtn,
+                  { backgroundColor: theme.accent },
+                  pressed && styles.pressed,
+                ]}>
+                <MaterialCommunityIcons
+                  name={activeSession ? 'play-circle' : 'plus'}
+                  size={18}
+                  color="#050507"
+                />
+                <Text style={styles.quickLogText}>
+                  {activeSession ? 'Resume Workout' : 'Start Workout'}
+                </Text>
+              </Pressable>
             </View>
 
             {/* Active Workout in Progress Banner */}
@@ -274,12 +262,6 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
         </AnimatedTabScreen>
-
-        {/* Theme Customizer Modal Studio */}
-        <ThemeCustomizerModal
-          visible={isThemeModalOpen}
-          onClose={() => setIsThemeModalOpen(false)}
-        />
       </SafeAreaView>
     </View>
   );
