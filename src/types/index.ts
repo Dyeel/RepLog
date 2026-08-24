@@ -115,6 +115,8 @@ export type AppData = {
   hasOnboarded: boolean;
   unitPreference: WeightUnit;
   themeId?: ThemeId;
+  profilePhotoUri?: string;
+  athleteName?: string;
 };
 
 export type OneRepMaxData = {

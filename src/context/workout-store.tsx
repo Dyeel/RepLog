@@ -43,6 +43,8 @@ type WorkoutStore = {
   schedule: ScheduleDay[];
   unitPreference: WeightUnit;
   themeId: ThemeId;
+  profilePhotoUri?: string | null;
+  athleteName?: string;
   stats: {
     totalSessions: number;
     thisWeekWorkouts: number;
@@ -78,6 +80,8 @@ type WorkoutStore = {
   updateScheduleDay: (day: DayOfWeek, label: string) => Promise<void>;
   setUnitPreference: (unit: WeightUnit) => Promise<void>;
   setThemeId: (themeId: ThemeId) => Promise<void>;
+  setProfilePhotoUri: (uri: string | null) => Promise<void>;
+  setAthleteName: (name: string) => Promise<void>;
   completeOnboarding: (prefs?: { unit?: WeightUnit; frequency?: WorkoutFrequency }) => Promise<void>;
   getExerciseSuggestions: (query: string) => string[];
 };
@@ -376,6 +380,24 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [data, persist],
   );
 
+  const setProfilePhotoUri = useCallback(
+    async (profilePhotoUri: string | null) => {
+      const current = data ?? (await loadAppData());
+      const next: AppData = { ...current, profilePhotoUri: profilePhotoUri || undefined };
+      await persist(next);
+    },
+    [data, persist],
+  );
+
+  const setAthleteName = useCallback(
+    async (athleteName: string) => {
+      const current = data ?? (await loadAppData());
+      const next: AppData = { ...current, athleteName: athleteName.trim() || undefined };
+      await persist(next);
+    },
+    [data, persist],
+  );
+
   const completeOnboarding = useCallback(
     async (prefs?: { unit?: WeightUnit; frequency?: WorkoutFrequency }) => {
       const current = data ?? (await loadAppData());
@@ -422,6 +444,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       schedule: data?.schedule ?? buildSchedule(3),
       unitPreference: data?.unitPreference ?? 'kg',
       themeId: data?.themeId ?? 'emerald',
+      profilePhotoUri: data?.profilePhotoUri ?? null,
+      athleteName: data?.athleteName ?? 'Athlete Profile',
       stats,
       addLog,
       addFullSession,
@@ -436,6 +460,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       updateScheduleDay,
       setUnitPreference,
       setThemeId,
+      setProfilePhotoUri,
+      setAthleteName,
       completeOnboarding,
       getExerciseSuggestions,
     }),
@@ -456,6 +482,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       updateScheduleDay,
       setUnitPreference,
       setThemeId,
+      setProfilePhotoUri,
+      setAthleteName,
       completeOnboarding,
       getExerciseSuggestions,
     ],

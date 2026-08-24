@@ -1,12 +1,15 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as ImagePicker from 'expo-image-picker';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -21,14 +24,13 @@ import {
   AnimatedTabScreen,
   ThemeCustomizerModal,
 } from '@/components/ui';
-import { BottomTabInset, Brand, Radius, Spacing, THEME_PALETTES } from '@/constants/theme';
+import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime } from '@/lib/utils';
 import { WeightUnit, WorkoutFrequency } from '@/types';
 
 const FREQUENCIES: WorkoutFrequency[] = [2, 3, 4, 5, 6];
-const THEMES_LIST = Object.values(THEME_PALETTES);
 
 export default function ProfileScreen() {
   const {
@@ -39,8 +41,10 @@ export default function ProfileScreen() {
     stats,
     frequency,
     unitPreference,
-    themeId,
-    setThemeId,
+    profilePhotoUri,
+    athleteName,
+    setProfilePhotoUri,
+    setAthleteName,
     setUnitPreference,
     setFrequency,
     deleteBodyWeightLog,
@@ -49,6 +53,8 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const [isLogWeightVisible, setIsLogWeightVisible] = useState(false);
   const [isThemeModalVisible, setIsThemeModalVisible] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(athleteName || 'Athlete Profile');
 
   const totalSessionsCount = useMemo(() => {
     return sessions.length || stats.totalSessions || 0;
@@ -61,6 +67,51 @@ export default function ProfileScreen() {
       </View>
     );
   }
+
+  const handleAvatarPress = () => {
+    if (profilePhotoUri) {
+      Alert.alert('Profile Photo', 'Update or remove your avatar photo', [
+        { text: 'Choose New Photo', onPress: pickImageFromLibrary },
+        { text: 'Remove Photo', style: 'destructive', onPress: () => setProfilePhotoUri(null) },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      pickImageFromLibrary();
+    }
+  };
+
+  const pickImageFromLibrary = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Photo Permission Needed',
+          'Please allow access to your photo library to set a custom profile photo.',
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        await setProfilePhotoUri(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Unable to pick image. Please try again.');
+    }
+  };
+
+  const handleSaveName = () => {
+    if (nameInput.trim()) {
+      setAthleteName(nameInput.trim());
+    }
+    setIsEditingName(false);
+  };
 
   const handleDeleteEntry = (id: string, weight: number) => {
     Alert.alert(
@@ -83,35 +134,106 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.safeArea}>
         <AnimatedTabScreen>
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-            {/* 1. Athlete Profile Hero Section */}
-            <View style={[styles.profileHeroCard, { borderColor: `${theme.accent}30` }]}>
-              {/* Top Banner Row */}
-              <View style={styles.profileHeaderRow}>
-                <View
-                  style={[
-                    styles.avatarGlowContainer,
-                    {
-                      borderColor: theme.accent,
-                      backgroundColor: `${theme.accent}12`,
-                      shadowColor: theme.accent,
-                    },
-                  ]}>
-                  <MaterialCommunityIcons name="shield-account" size={32} color={theme.accent} />
-                </View>
+            {/* Header with Top-Right Little Theme Button */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.sectionTag}>ATHLETE HUB</Text>
+                <Text style={styles.mainHeadline}>Profile</Text>
+              </View>
 
+              <Pressable
+                onPress={() => setIsThemeModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.topRightThemeBtn,
+                  { borderColor: `${theme.accent}40`, backgroundColor: `${theme.accent}12` },
+                  pressed && styles.pressed,
+                ]}>
+                <MaterialCommunityIcons name="palette-outline" size={17} color={theme.accent} />
+                <Text style={[styles.topRightThemeText, { color: theme.accent }]}>Theme</Text>
+              </Pressable>
+            </View>
+
+            {/* 1. Athlete Profile Card */}
+            <View style={[styles.profileHeroCard, { borderColor: `${theme.accent}30` }]}>
+              <View style={styles.profileHeaderRow}>
+                {/* Interactive Avatar with Photo Picker */}
+                <Pressable
+                  onPress={handleAvatarPress}
+                  style={({ pressed }) => [
+                    styles.avatarWrapper,
+                    { borderColor: theme.accent, shadowColor: theme.accent },
+                    pressed && styles.pressed,
+                  ]}>
+                  {profilePhotoUri ? (
+                    <Image source={{ uri: profilePhotoUri }} style={styles.avatarImage} />
+                  ) : (
+                    <View
+                      style={[
+                        styles.avatarPlaceholder,
+                        { backgroundColor: `${theme.accent}15` },
+                      ]}>
+                      <MaterialCommunityIcons name="arm-flex" size={32} color={theme.accent} />
+                    </View>
+                  )}
+
+                  {/* Little Camera Badge Overlay */}
+                  <View style={[styles.cameraBadge, { backgroundColor: theme.accent }]}>
+                    <MaterialCommunityIcons name="camera" size={12} color="#050507" />
+                  </View>
+                </Pressable>
+
+                {/* Profile Name & Level Badge */}
                 <View style={styles.profileInfoCol}>
                   <View style={styles.nameRow}>
-                    <Text style={styles.athleteName}>Athlete Profile</Text>
+                    {isEditingName ? (
+                      <View style={styles.nameEditRow}>
+                        <TextInput
+                          value={nameInput}
+                          onChangeText={setNameInput}
+                          autoFocus
+                          onSubmitEditing={handleSaveName}
+                          style={styles.nameInput}
+                          placeholderTextColor={Brand.textMuted}
+                        />
+                        <Pressable onPress={handleSaveName} style={styles.saveNameBtn}>
+                          <MaterialCommunityIcons name="check" size={16} color={theme.accent} />
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Pressable
+                        onPress={() => {
+                          setNameInput(athleteName || 'Athlete Profile');
+                          setIsEditingName(true);
+                        }}
+                        style={styles.namePressableRow}>
+                        <Text style={styles.athleteName} numberOfLines={1}>
+                          {athleteName || 'Athlete Profile'}
+                        </Text>
+                        <MaterialCommunityIcons
+                          name="pencil-outline"
+                          size={15}
+                          color={Brand.textMuted}
+                        />
+                      </Pressable>
+                    )}
+
                     <View
                       style={[
                         styles.statusBadge,
                         { backgroundColor: `${theme.accent}20`, borderColor: theme.accent },
                       ]}>
                       <View style={[styles.statusDot, { backgroundColor: theme.accent }]} />
-                      <Text style={[styles.statusBadgeText, { color: theme.accent }]}>PRO LIFTER</Text>
+                      <Text style={[styles.statusBadgeText, { color: theme.accent }]}>
+                        ACTIVE
+                      </Text>
                     </View>
                   </View>
-                  <Text style={styles.athleteSub}>Consistency & Progressive Overload</Text>
+
+                  <Pressable onPress={handleAvatarPress}>
+                    <Text style={[styles.changePhotoText, { color: theme.accent }]}>
+                      {profilePhotoUri ? 'Tap to change photo' : '+ Upload avatar photo'}
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
 
@@ -140,7 +262,11 @@ export default function ProfileScreen() {
                 <View style={styles.matrixRow}>
                   <View style={styles.matrixCard}>
                     <View style={styles.matrixCardHeader}>
-                      <MaterialCommunityIcons name="chart-bell-curve-cumulative" size={14} color={Brand.textSecondary} />
+                      <MaterialCommunityIcons
+                        name="chart-bell-curve-cumulative"
+                        size={14}
+                        color={Brand.textSecondary}
+                      />
                       <Text style={styles.matrixLabel}>VOLUME ({unitPreference.toUpperCase()})</Text>
                     </View>
                     <Text style={styles.matrixValue}>
@@ -153,7 +279,7 @@ export default function ProfileScreen() {
                   <View style={styles.matrixCard}>
                     <View style={styles.matrixCardHeader}>
                       <MaterialCommunityIcons name="calendar-check" size={14} color={theme.accent} />
-                      <Text style={styles.matrixLabel}>SPLIT TARGET</Text>
+                      <Text style={styles.matrixLabel}>WEEKLY TARGET</Text>
                     </View>
                     <Text style={[styles.matrixValue, { color: theme.accent }]}>
                       {frequency}D / wk
@@ -163,7 +289,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* 2. Progression Section (Placed DIRECTLY below Profile) */}
+            {/* 2. Progression Section (Placed Directly Below Profile) */}
             <View style={styles.progressionSectionWrapper}>
               <View style={styles.progressHeaderRow}>
                 <View>
@@ -241,64 +367,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* 3. Theme & Visual Style Studio Section */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionCardHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <MaterialCommunityIcons name="palette-outline" size={18} color={theme.accent} />
-                  <Text style={styles.sectionCardTitle}>THEME STUDIO</Text>
-                </View>
-                <Pressable
-                  onPress={() => setIsThemeModalVisible(true)}
-                  style={({ pressed }) => [styles.openStudioPill, pressed && styles.pressed]}>
-                  <Text style={[styles.seeAllText, { color: theme.accent }]}>Studio Modal ↗</Text>
-                </Pressable>
-              </View>
-
-              <Text style={styles.sectionHelper}>
-                Select an accent color palette to customize all screens, curves, and active buttons.
-              </Text>
-
-              {/* Luxury Theme Palette Grid */}
-              <View style={styles.themesGrid}>
-                {THEMES_LIST.map((item) => {
-                  const isSelected = themeId === item.id;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => setThemeId(item.id)}
-                      style={({ pressed }) => [
-                        styles.themeCardItem,
-                        { borderColor: isSelected ? item.accent : Brand.cardBorder },
-                        isSelected && {
-                          backgroundColor: `${item.accent}14`,
-                          borderColor: item.accent,
-                        },
-                        pressed && styles.pressed,
-                      ]}>
-                      <View style={[styles.themeDotBig, { backgroundColor: item.accent }]} />
-                      <View style={styles.themeNameCol}>
-                        <Text
-                          style={[
-                            styles.themePillName,
-                            isSelected && { color: item.accent, fontWeight: '800' },
-                          ]}>
-                          {item.name}
-                        </Text>
-                        <Text style={styles.themeSubText}>{item.subtitle.split('·')[1]?.trim() || item.subtitle}</Text>
-                      </View>
-                      {isSelected ? (
-                        <View style={[styles.checkCircle, { backgroundColor: item.accent }]}>
-                          <MaterialCommunityIcons name="check" size={12} color="#050507" />
-                        </View>
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* 4. Training Preferences & App Settings */}
+            {/* 3. Training Preferences & App Settings */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionCardHeader}>
                 <View style={styles.sectionTitleRow}>
@@ -421,6 +490,36 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.four,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sectionTag: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  mainHeadline: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  topRightThemeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 7,
+    borderWidth: 1,
+  },
+  topRightThemeText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
   profileHeroCard: {
     backgroundColor: Brand.card,
     borderRadius: Radius.xl,
@@ -434,30 +533,79 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
-  avatarGlowContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  avatarWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'relative',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 6,
   },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+  },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#050507',
+  },
   profileInfoCol: {
     flex: 1,
-    gap: 3,
+    gap: 4,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
+  },
+  namePressableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  nameEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  nameInput: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFFFFF',
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+    flex: 1,
+  },
+  saveNameBtn: {
+    padding: 4,
   },
   athleteName: {
     color: '#FFFFFF',
-    fontSize: 21,
+    fontSize: 19,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
@@ -480,10 +628,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  athleteSub: {
-    color: Brand.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
+  changePhotoText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   matrixContainer: {
     gap: Spacing.two,
@@ -527,12 +674,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingTop: Spacing.one,
   },
-  sectionTag: {
-    color: Brand.textSecondary,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
   headline: {
     color: '#FFFFFF',
     fontSize: 28,
@@ -575,61 +716,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.8,
-  },
-  openStudioPill: {
-    backgroundColor: Brand.cardElevated,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.xs,
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-  },
-  seeAllText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  sectionHelper: {
-    color: Brand.textSecondary,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  themesGrid: {
-    gap: 8,
-  },
-  themeCardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 10,
-    borderWidth: 1.5,
-  },
-  themeDotBig: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  themeNameCol: {
-    flex: 1,
-    gap: 1,
-  },
-  themePillName: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  themeSubText: {
-    color: Brand.textMuted,
-    fontSize: 11,
-  },
-  checkCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   prefRow: {
     gap: Spacing.two,
