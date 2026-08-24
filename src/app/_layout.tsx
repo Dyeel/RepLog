@@ -1,21 +1,49 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useEffect } from 'react';
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Stack } from 'expo-router';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { Brand } from '@/constants/theme';
 import { WorkoutProvider } from '@/context/workout-store';
 
 SplashScreen.preventAutoHideAsync();
 
+const RepLogTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: Brand.background,
+    card: Brand.card,
+    border: Brand.cardBorder,
+    primary: Brand.emerald,
+    text: '#FFFFFF',
+  },
+};
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
   return (
     <WorkoutProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
-        <AppTabs />
+      <ThemeProvider value={RepLogTheme}>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen
+            name="log"
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen name="workout/[date]" options={{ headerShown: false }} />
+          <Stack.Screen name="history/[id]" options={{ headerShown: false }} />
+        </Stack>
       </ThemeProvider>
     </WorkoutProvider>
   );

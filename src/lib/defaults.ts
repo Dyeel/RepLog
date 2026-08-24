@@ -1,3 +1,4 @@
+import { EXERCISE_LIBRARY } from '@/lib/exercise-library';
 import { AppData, DayOfWeek, ScheduleDay, WorkoutFrequency } from '@/types';
 
 export function getDefaultSplit(frequency: WorkoutFrequency): Record<DayOfWeek, string> {
@@ -14,11 +15,11 @@ export function getDefaultSplit(frequency: WorkoutFrequency): Record<DayOfWeek, 
       };
     case 3:
       return {
-        monday: 'Upper',
-        tuesday: 'Lower',
-        wednesday: 'Rest',
-        thursday: 'Upper',
-        friday: 'Lower',
+        monday: 'Push',
+        tuesday: 'Rest',
+        wednesday: 'Pull',
+        thursday: 'Rest',
+        friday: 'Legs',
         saturday: 'Rest',
         sunday: 'Rest',
       };
@@ -29,7 +30,27 @@ export function getDefaultSplit(frequency: WorkoutFrequency): Record<DayOfWeek, 
         wednesday: 'Rest',
         thursday: 'Upper',
         friday: 'Lower',
-        saturday: 'Full Body',
+        saturday: 'Rest',
+        sunday: 'Rest',
+      };
+    case 5:
+      return {
+        monday: 'Push',
+        tuesday: 'Pull',
+        wednesday: 'Legs',
+        thursday: 'Rest',
+        friday: 'Upper',
+        saturday: 'Lower',
+        sunday: 'Rest',
+      };
+    case 6:
+      return {
+        monday: 'Push',
+        tuesday: 'Pull',
+        wednesday: 'Legs',
+        thursday: 'Push',
+        friday: 'Pull',
+        saturday: 'Legs',
         sunday: 'Rest',
       };
   }
@@ -47,8 +68,13 @@ export function getDefaultAppData(): AppData {
   const frequency: WorkoutFrequency = 3;
   return {
     logs: [],
-    exerciseNames: [],
+    sessions: [],
+    bodyWeightLogs: [],
+    customExercises: [],
+    exerciseNames: EXERCISE_LIBRARY.map((e) => e.name),
     frequency,
     schedule: buildSchedule(frequency),
+    hasOnboarded: false,
+    unitPreference: 'kg',
   };
 }

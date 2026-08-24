@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
+import { ThemedText } from './themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -106,7 +106,7 @@ export function EmptyState({ title, message }: EmptyStateProps) {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#3c87f7',
+    backgroundColor: '#34786E',
     borderRadius: Spacing.three,
     paddingVertical: Spacing.three,
     alignItems: 'center',
