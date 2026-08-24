@@ -12,32 +12,49 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { AnimatedTabScreen } from '@/components/ui';
-import { calculatePlates } from '@/lib/plate-calculator';
-import { calculate1RM, convertWeight } from '@/lib/utils';
-import { WeightUnit } from '@/types';
+import { convertWeight } from '@/lib/utils';
 
-type CalcMode = 'converter' | 'plates' | 'one_rm';
+type BenchmarkItem = {
+  plates: string;
+  lbs: string;
+  kg: string;
+  name: string;
+};
 
-const COMMON_BENCHMARKS = [
-  { lbs: '45', kg: '20.4', label: 'Bar Only (45 lbs / 20.4 kg)' },
-  { lbs: '135', kg: '61.2', label: '1 Plate (135 lbs / 61.2 kg)' },
-  { lbs: '185', kg: '83.9', label: '1 Plate + 25s (185 lbs / 83.9 kg)' },
-  { lbs: '225', kg: '102.1', label: '2 Plates (225 lbs / 102.1 kg)' },
-  { lbs: '275', kg: '124.7', label: '2 Plates + 25s (275 lbs / 124.7 kg)' },
-  { lbs: '315', kg: '142.9', label: '3 Plates (315 lbs / 142.9 kg)' },
-  { lbs: '365', kg: '165.6', label: '3 Plates + 25s (365 lbs / 165.6 kg)' },
-  { lbs: '405', kg: '183.7', label: '4 Plates (405 lbs / 183.7 kg)' },
-  { lbs: '495', kg: '224.5', label: '5 Plates (495 lbs / 224.5 kg)' },
+const BARBELL_BENCHMARKS: BenchmarkItem[] = [
+  { plates: 'Bar', lbs: '45', kg: '20.4', name: 'Standard Olympic Bar' },
+  { plates: '1 Plate', lbs: '135', kg: '61.2', name: '135 lbs / 1 Plate per side' },
+  { plates: '1 Plate + 25s', lbs: '185', kg: '83.9', name: '185 lbs / 1 Plate + 25 lb' },
+  { plates: '2 Plates', lbs: '225', kg: '102.1', name: '225 lbs / 2 Plates per side' },
+  { plates: '2 Plates + 25s', lbs: '275', kg: '124.7', name: '275 lbs / 2 Plates + 25 lb' },
+  { plates: '3 Plates', lbs: '315', kg: '142.9', name: '315 lbs / 3 Plates per side' },
+  { plates: '3 Plates + 25s', lbs: '365', kg: '165.6', name: '365 lbs / 3 Plates + 25 lb' },
+  { plates: '4 Plates', lbs: '405', kg: '183.7', name: '405 lbs / 4 Plates per side' },
+  { plates: '5 Plates', lbs: '495', kg: '224.5', name: '495 lbs / 5 Plates per side' },
+];
+
+const DUMBBELL_PRESETS = [
+  { kg: '5', lbs: '11' },
+  { kg: '10', lbs: '22' },
+  { kg: '15', lbs: '33.1' },
+  { kg: '20', lbs: '44.1' },
+  { kg: '25', lbs: '55.1' },
+  { kg: '30', lbs: '66.1' },
+  { kg: '35', lbs: '77.2' },
+  { kg: '40', lbs: '88.2' },
 ];
 
 export default function CalculatorScreen() {
-  const [activeMode, setActiveMode] = useState<CalcMode>('converter');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Live Synchronized Dual Inputs
+  const [kgVal, setKgVal] = useState('100');
+  const [lbsVal, setLbsVal] = useState('220.5');
+  const [activeInput, setActiveInput] = useState<'kg' | 'lbs'>('kg');
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
@@ -54,11 +71,8 @@ export default function CalculatorScreen() {
     };
   }, []);
 
-  // 1. KG ⇄ LBS State
-  const [kgVal, setKgVal] = useState('100');
-  const [lbsVal, setLbsVal] = useState('220.5');
-
   const handleKgChange = (val: string) => {
+    setActiveInput('kg');
     setKgVal(val);
     if (!val || isNaN(parseFloat(val))) {
       setLbsVal('');
@@ -68,6 +82,7 @@ export default function CalculatorScreen() {
   };
 
   const handleLbsChange = (val: string) => {
+    setActiveInput('lbs');
     setLbsVal(val);
     if (!val || isNaN(parseFloat(val))) {
       setKgVal('');
@@ -76,36 +91,31 @@ export default function CalculatorScreen() {
     }
   };
 
-  const adjustKg = (delta: number) => {
-    const current = parseFloat(kgVal) || 0;
-    const next = Math.max(0, Math.round((current + delta) * 10) / 10);
-    handleKgChange(next.toString());
+  const adjustWeight = (delta: number) => {
+    if (activeInput === 'kg') {
+      const current = parseFloat(kgVal) || 0;
+      const next = Math.max(0, Math.round((current + delta) * 10) / 10);
+      handleKgChange(next.toString());
+    } else {
+      const current = parseFloat(lbsVal) || 0;
+      const next = Math.max(0, Math.round((current + delta * 2) * 10) / 10);
+      handleLbsChange(next.toString());
+    }
   };
 
-  const applyBenchmark = (item: { lbs: string; kg: string }) => {
+  const setExactKg = (kg: string) => {
+    handleKgChange(kg);
+  };
+
+  const setExactBenchmark = (item: BenchmarkItem) => {
     setKgVal(item.kg);
     setLbsVal(item.lbs);
   };
 
-  // 2. Barbell Plates State
-  const [plateUnit, setPlateUnit] = useState<WeightUnit>('kg');
-  const [plateWeightInput, setPlateWeightInput] = useState('100');
-  const [barWeight, setBarWeight] = useState(20);
-
-  const adjustPlateWeight = (delta: number) => {
-    const current = parseFloat(plateWeightInput) || 0;
-    const next = Math.max(barWeight, Math.round((current + delta) * 10) / 10);
-    setPlateWeightInput(next.toString());
+  const handleClear = () => {
+    setKgVal('');
+    setLbsVal('');
   };
-
-  const plateCalc = calculatePlates(parseFloat(plateWeightInput) || 0, plateUnit, barWeight);
-
-  // 3. 1RM Estimator State
-  const [oneRmWeight, setOneRmWeight] = useState('100');
-  const [oneRmReps, setOneRmReps] = useState('5');
-  const [oneRmUnit, setOneRmUnit] = useState<WeightUnit>('kg');
-
-  const estimated1RM = calculate1RM(parseFloat(oneRmWeight) || 0, parseInt(oneRmReps, 10) || 1);
 
   return (
     <View style={styles.container}>
@@ -119,450 +129,215 @@ export default function CalculatorScreen() {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled">
-            {/* Screen Header */}
-            <View style={styles.header}>
-              <View style={styles.headerTitleRow}>
-                <View>
-                  <Text style={styles.sectionTag}>FITNESS UTILITIES</Text>
-                  <Text style={styles.headline}>Calculator</Text>
-                </View>
+              {/* Header */}
+              <View style={styles.header}>
+                <View style={styles.headerTitleRow}>
+                  <View>
+                    <Text style={styles.sectionTag}>PRECISION CONVERTER</Text>
+                    <Text style={styles.headline}>KG ⇄ LBS</Text>
+                  </View>
 
-                {isKeyboardVisible && (
-                  <Pressable onPress={Keyboard.dismiss} style={styles.doneBtnHeader}>
-                    <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
-                    <Text style={styles.doneBtnHeaderText}>Done</Text>
-                  </Pressable>
-                )}
+                  <View style={styles.headerActions}>
+                    {isKeyboardVisible && (
+                      <Pressable onPress={Keyboard.dismiss} style={styles.doneBtnHeader}>
+                        <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
+                        <Text style={styles.doneBtnHeaderText}>Done</Text>
+                      </Pressable>
+                    )}
+                    <Pressable onPress={handleClear} style={styles.clearHeaderBtn}>
+                      <MaterialCommunityIcons name="refresh" size={16} color={Brand.textSecondary} />
+                      <Text style={styles.clearHeaderText}>Reset</Text>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
-            </View>
 
-            {/* Mode Selector Tabs */}
-            <View style={styles.tabBar}>
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setActiveMode('converter');
-                }}
-                style={[styles.tabBtn, activeMode === 'converter' && styles.tabBtnActive]}>
-                <MaterialCommunityIcons
-                  name="swap-horizontal"
-                  size={16}
-                  color={activeMode === 'converter' ? '#050507' : Brand.textSecondary}
-                />
-                <Text
+              {/* Primary Interactive Dual Converter Hero Card */}
+              <View style={styles.converterHeroCard}>
+                {/* 1. Kilograms Card Box */}
+                <Pressable
+                  onPress={() => setActiveInput('kg')}
                   style={[
-                    styles.tabBtnText,
-                    activeMode === 'converter' && styles.tabBtnTextActive,
+                    styles.unitInputBox,
+                    activeInput === 'kg' && styles.unitInputBoxActive,
                   ]}>
-                  KG ⇄ LBS
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setActiveMode('plates');
-                }}
-                style={[styles.tabBtn, activeMode === 'plates' && styles.tabBtnActive]}>
-                <MaterialCommunityIcons
-                  name="weight"
-                  size={16}
-                  color={activeMode === 'plates' ? '#050507' : Brand.textSecondary}
-                />
-                <Text
-                  style={[styles.tabBtnText, activeMode === 'plates' && styles.tabBtnTextActive]}>
-                  Plates
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setActiveMode('one_rm');
-                }}
-                style={[styles.tabBtn, activeMode === 'one_rm' && styles.tabBtnActive]}>
-                <MaterialCommunityIcons
-                  name="trophy-outline"
-                  size={16}
-                  color={activeMode === 'one_rm' ? '#050507' : Brand.textSecondary}
-                />
-                <Text
-                  style={[styles.tabBtnText, activeMode === 'one_rm' && styles.tabBtnTextActive]}>
-                  1RM Max
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* MODE 1: KG ⇄ LBS CONVERTER */}
-            {activeMode === 'converter' && (
-              <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.titleRow}>
-                    <MaterialCommunityIcons name="swap-horizontal" size={20} color={Brand.emerald} />
-                    <Text style={styles.cardTitle}>BIDIRECTIONAL CONVERTER</Text>
+                  <View style={styles.unitInputHeader}>
+                    <View style={styles.unitPill}>
+                      <Text style={styles.unitPillText}>KILOGRAMS</Text>
+                    </View>
+                    <Text style={styles.unitSymbolLarge}>KG</Text>
                   </View>
-                  <Text style={styles.cardBadge}>Instant Sync</Text>
+
+                  <TextInput
+                    value={kgVal}
+                    onChangeText={handleKgChange}
+                    onFocus={() => setActiveInput('kg')}
+                    keyboardType="decimal-pad"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                    placeholder="0"
+                    placeholderTextColor={Brand.textMuted}
+                    style={[styles.bigNumberInput, activeInput === 'kg' && styles.numberInputActive]}
+                  />
+                </Pressable>
+
+                {/* Swap Icon Divider */}
+                <View style={styles.swapDividerRow}>
+                  <View style={styles.swapLine} />
+                  <View style={styles.swapBadge}>
+                    <MaterialCommunityIcons name="swap-vertical" size={20} color={Brand.emerald} />
+                  </View>
+                  <View style={styles.swapLine} />
                 </View>
 
-                {/* Primary KG Input */}
-                <View style={styles.inputBlock}>
-                  <Text style={styles.inputLabel}>KILOGRAMS (KG)</Text>
-                  <View style={styles.inputBox}>
-                    <TextInput
-                      value={kgVal}
-                      onChangeText={handleKgChange}
-                      keyboardType="decimal-pad"
-                      returnKeyType="done"
-                      onSubmitEditing={Keyboard.dismiss}
-                      placeholder="0"
-                      placeholderTextColor={Brand.textMuted}
-                      style={styles.textInput}
-                    />
-                    <Text style={styles.unitBadge}>KG</Text>
+                {/* 2. Pounds Card Box */}
+                <Pressable
+                  onPress={() => setActiveInput('lbs')}
+                  style={[
+                    styles.unitInputBox,
+                    activeInput === 'lbs' && styles.unitInputBoxActive,
+                  ]}>
+                  <View style={styles.unitInputHeader}>
+                    <View style={[styles.unitPill, styles.unitPillSecondary]}>
+                      <Text style={[styles.unitPillText, styles.unitPillTextSecondary]}>
+                        POUNDS
+                      </Text>
+                    </View>
+                    <Text style={styles.unitSymbolLarge}>LBS</Text>
                   </View>
 
-                  {/* Quick Stepper Pills */}
-                  <View style={styles.steppersRow}>
-                    {[-10, -5, -1, +1, +5, +10].map((delta) => (
+                  <TextInput
+                    value={lbsVal}
+                    onChangeText={handleLbsChange}
+                    onFocus={() => setActiveInput('lbs')}
+                    keyboardType="decimal-pad"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                    placeholder="0"
+                    placeholderTextColor={Brand.textMuted}
+                    style={[styles.bigNumberInput, activeInput === 'lbs' && styles.numberInputActive]}
+                  />
+                </Pressable>
+
+                {/* Quick Increment Steppers Row */}
+                <View style={styles.stepperSection}>
+                  <Text style={styles.stepperLabel}>
+                    QUICK ADJUST ({activeInput.toUpperCase()})
+                  </Text>
+                  <View style={styles.stepperPillsRow}>
+                    {[-10, -5, -2.5, -1, +1, +2.5, +5, +10].map((delta) => (
                       <Pressable
                         key={delta}
-                        onPress={() => adjustKg(delta)}
-                        style={({ pressed }) => [styles.stepperPill, pressed && styles.pressed]}>
-                        <Text style={styles.stepperPillText}>
+                        onPress={() => adjustWeight(delta)}
+                        style={({ pressed }) => [styles.stepperBtn, pressed && styles.pressed]}>
+                        <Text style={styles.stepperBtnText}>
                           {delta > 0 ? `+${delta}` : delta}
                         </Text>
                       </Pressable>
                     ))}
                   </View>
                 </View>
+              </View>
 
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <View style={styles.equalCircle}>
-                    <MaterialCommunityIcons name="equal" size={16} color={Brand.emerald} />
-                  </View>
-                  <View style={styles.dividerLine} />
+              {/* Dumbbell & Kettlebell Presets */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <MaterialCommunityIcons name="dumbbell" size={18} color={Brand.emerald} />
+                  <Text style={styles.sectionCardTitle}>DUMBBELL & KETTLEBELL PRESETS</Text>
                 </View>
-
-                {/* Secondary LBS Input */}
-                <View style={styles.inputBlock}>
-                  <Text style={styles.inputLabel}>POUNDS (LBS)</Text>
-                  <View style={styles.inputBox}>
-                    <TextInput
-                      value={lbsVal}
-                      onChangeText={handleLbsChange}
-                      keyboardType="decimal-pad"
-                      returnKeyType="done"
-                      onSubmitEditing={Keyboard.dismiss}
-                      placeholder="0"
-                      placeholderTextColor={Brand.textMuted}
-                      style={styles.textInput}
-                    />
-                    <Text style={styles.unitBadge}>LBS</Text>
-                  </View>
+                <View style={styles.dumbbellPillsGrid}>
+                  {DUMBBELL_PRESETS.map((db) => {
+                    const isSelected = kgVal === db.kg;
+                    return (
+                      <Pressable
+                        key={db.kg}
+                        onPress={() => setExactKg(db.kg)}
+                        style={({ pressed }) => [
+                          styles.dumbbellPill,
+                          isSelected && styles.dumbbellPillSelected,
+                          pressed && styles.pressed,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.dumbbellPillKg,
+                            isSelected && styles.dumbbellPillKgSelected,
+                          ]}>
+                          {db.kg} kg
+                        </Text>
+                        <Text style={styles.dumbbellPillArrow}>⇄</Text>
+                        <Text
+                          style={[
+                            styles.dumbbellPillLbs,
+                            isSelected && styles.dumbbellPillLbsSelected,
+                          ]}>
+                          {db.lbs} lbs
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
+              </View>
 
-                {/* Benchmarks Section (Clean Full-Width List) */}
-                <View style={styles.benchmarksSection}>
-                  <Text style={styles.subHeader}>BARBELL BENCHMARK PRESETS</Text>
-                  <View style={styles.benchmarksList}>
-                    {COMMON_BENCHMARKS.map((item) => (
+              {/* Barbell Load Benchmarks */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <MaterialCommunityIcons name="weight-lifter" size={18} color={Brand.emerald} />
+                  <Text style={styles.sectionCardTitle}>OLYMPIC BARBELL BENCHMARKS</Text>
+                </View>
+                <View style={styles.benchmarkList}>
+                  {BARBELL_BENCHMARKS.map((item, index) => {
+                    const isSelected = lbsVal === item.lbs;
+                    return (
                       <Pressable
                         key={item.lbs}
-                        onPress={() => applyBenchmark(item)}
+                        onPress={() => setExactBenchmark(item)}
                         style={({ pressed }) => [
-                          styles.benchmarkRow,
-                          pressed && styles.rowPressed,
+                          styles.benchmarkCardRow,
+                          isSelected && styles.benchmarkCardRowSelected,
+                          pressed && styles.pressed,
                         ]}>
-                        <Text style={styles.benchmarkLabel}>{item.label}</Text>
-                        <View style={styles.benchmarkRight}>
-                          <Text style={styles.benchmarkLbs}>{item.lbs} lbs</Text>
-                          <Text style={styles.benchmarkArrow}>⇄</Text>
-                          <Text style={styles.benchmarkKg}>{item.kg} kg</Text>
+                        <View style={styles.benchmarkLeftCol}>
+                          <View style={styles.benchmarkBadge}>
+                            <Text style={styles.benchmarkBadgeText}>{item.plates}</Text>
+                          </View>
+                          <Text style={styles.benchmarkNameText}>{item.name}</Text>
+                        </View>
+
+                        <View style={styles.benchmarkRightCol}>
+                          <Text style={styles.benchmarkLbsText}>{item.lbs} lbs</Text>
+                          <Text style={styles.benchmarkArrowText}>⇄</Text>
+                          <Text style={styles.benchmarkKgText}>{item.kg} kg</Text>
                         </View>
                       </Pressable>
-                    ))}
-                  </View>
+                    );
+                  })}
                 </View>
-              </Animated.View>
-            )}
+              </View>
 
-            {/* MODE 2: BARBELL PLATES CALCULATOR */}
-            {activeMode === 'plates' && (
-              <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.titleRow}>
-                    <MaterialCommunityIcons name="weight" size={20} color={Brand.emerald} />
-                    <Text style={styles.cardTitle}>OLYMPIC BARBELL LOADER</Text>
-                  </View>
-
-                  {/* Unit Selector */}
-                  <View style={styles.unitToggleRow}>
-                    <Pressable
-                      onPress={() => {
-                        setPlateUnit('kg');
-                        setBarWeight(20);
-                      }}
-                      style={[styles.miniUnitBtn, plateUnit === 'kg' && styles.miniUnitActive]}>
-                      <Text
-                        style={[
-                          styles.miniUnitText,
-                          plateUnit === 'kg' && styles.miniUnitTextActive,
-                        ]}>
-                        KG
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => {
-                        setPlateUnit('lbs');
-                        setBarWeight(45);
-                      }}
-                      style={[styles.miniUnitBtn, plateUnit === 'lbs' && styles.miniUnitActive]}>
-                      <Text
-                        style={[
-                          styles.miniUnitText,
-                          plateUnit === 'lbs' && styles.miniUnitTextActive,
-                        ]}>
-                        LBS
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                {/* Target Weight Field */}
-                <View style={styles.inputBlock}>
-                  <Text style={styles.inputLabel}>TARGET TOTAL BARBELL LOAD</Text>
-                  <View style={styles.inputBox}>
-                    <TextInput
-                      value={plateWeightInput}
-                      onChangeText={setPlateWeightInput}
-                      keyboardType="decimal-pad"
-                      returnKeyType="done"
-                      onSubmitEditing={Keyboard.dismiss}
-                      placeholder="0"
-                      placeholderTextColor={Brand.textMuted}
-                      style={styles.textInput}
-                    />
-                    <Text style={styles.unitBadge}>{plateUnit.toUpperCase()}</Text>
-                  </View>
-
-                  {/* Quick Stepper Pills */}
-                  <View style={styles.steppersRow}>
-                    {[-20, -10, -5, +5, +10, +20].map((delta) => (
-                      <Pressable
-                        key={delta}
-                        onPress={() => adjustPlateWeight(delta)}
-                        style={({ pressed }) => [styles.stepperPill, pressed && styles.pressed]}>
-                        <Text style={styles.stepperPillText}>
-                          {delta > 0 ? `+${delta}` : delta}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Bar Weight Selector */}
-                <View style={styles.barWeightContainer}>
-                  <Text style={styles.inputLabel}>OLYMPIC BAR WEIGHT</Text>
-                  <View style={styles.barWeightOptions}>
-                    <Pressable
-                      onPress={() => setBarWeight(plateUnit === 'kg' ? 20 : 45)}
-                      style={[
-                        styles.barOptionBtn,
-                        barWeight === (plateUnit === 'kg' ? 20 : 45) && styles.barOptionActive,
-                      ]}>
-                      <Text style={styles.barOptionTitle}>Standard Bar</Text>
-                      <Text style={styles.barOptionSub}>
-                        {plateUnit === 'kg' ? '20 kg (Men)' : '45 lbs'}
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => setBarWeight(plateUnit === 'kg' ? 15 : 35)}
-                      style={[
-                        styles.barOptionBtn,
-                        barWeight === (plateUnit === 'kg' ? 15 : 35) && styles.barOptionActive,
-                      ]}>
-                      <Text style={styles.barOptionTitle}>Technique / Women</Text>
-                      <Text style={styles.barOptionSub}>
-                        {plateUnit === 'kg' ? '15 kg' : '35 lbs'}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                {/* Sleeve Breakdown Card */}
-                <View style={styles.sleeveResultBox}>
-                  <Text style={styles.sleeveTag}>LOAD ON EACH SIDE</Text>
-                  <Text style={styles.sleeveHeroValue}>
-                    {plateCalc.weightPerSide} <Text style={styles.unitBadge}>{plateUnit}</Text>
+              {/* Exact Formula Reference Footer */}
+              <View style={styles.formulaCard}>
+                <MaterialCommunityIcons name="calculator-variant" size={18} color={Brand.textMuted} />
+                <View style={styles.formulaTextCol}>
+                  <Text style={styles.formulaTitle}>Exact Scientific Conversion Ratio</Text>
+                  <Text style={styles.formulaDetails}>
+                    1 kg = 2.20462262 lbs · 1 lb = 0.45359237 kg
                   </Text>
-
-                  {/* Colored Plate Chips */}
-                  <View style={styles.platesWrap}>
-                    {plateCalc.plates.map(
-                      (plate: { weight: number; count: number; color: string }) => (
-                        <View
-                          key={plate.weight}
-                          style={[styles.plateDiscChip, { borderColor: plate.color }]}>
-                          <View
-                            style={[styles.plateDiscDot, { backgroundColor: plate.color }]}
-                          />
-                          <Text style={styles.plateDiscText}>
-                            {plate.count} × {plate.weight} {plateUnit}
-                          </Text>
-                        </View>
-                      ),
-                    )}
-                  </View>
-
-                  {plateCalc.remainder > 0 && (
-                    <Text style={styles.remainderNotice}>
-                      ⚠️ +{plateCalc.remainder} {plateUnit} remainder (no smaller microplates)
-                    </Text>
-                  )}
                 </View>
-              </Animated.View>
+              </View>
+            </ScrollView>
+
+            {/* Floating Dismiss Button */}
+            {isKeyboardVisible && (
+              <Pressable onPress={Keyboard.dismiss} style={styles.floatingDismissBtn}>
+                <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
+                <Text style={styles.floatingDismissText}>Done</Text>
+              </Pressable>
             )}
-
-            {/* MODE 3: 1RM ESTIMATOR */}
-            {activeMode === 'one_rm' && (
-              <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.titleRow}>
-                    <MaterialCommunityIcons name="trophy-outline" size={20} color={Brand.emerald} />
-                    <Text style={styles.cardTitle}>ONE-REP MAX ESTIMATOR</Text>
-                  </View>
-
-                  {/* Unit Toggle */}
-                  <View style={styles.unitToggleRow}>
-                    <Pressable
-                      onPress={() => setOneRmUnit('kg')}
-                      style={[styles.miniUnitBtn, oneRmUnit === 'kg' && styles.miniUnitActive]}>
-                      <Text
-                        style={[
-                          styles.miniUnitText,
-                          oneRmUnit === 'kg' && styles.miniUnitTextActive,
-                        ]}>
-                        KG
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => setOneRmUnit('lbs')}
-                      style={[styles.miniUnitBtn, oneRmUnit === 'lbs' && styles.miniUnitActive]}>
-                      <Text
-                        style={[
-                          styles.miniUnitText,
-                          oneRmUnit === 'lbs' && styles.miniUnitTextActive,
-                        ]}>
-                        LBS
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                {/* Input Fields */}
-                <View style={styles.oneRmInputsRow}>
-                  <View style={styles.flexOne}>
-                    <Text style={styles.inputLabel}>WEIGHT LIFTED</Text>
-                    <View style={styles.inputBox}>
-                      <TextInput
-                        value={oneRmWeight}
-                        onChangeText={setOneRmWeight}
-                        keyboardType="decimal-pad"
-                        returnKeyType="done"
-                        onSubmitEditing={Keyboard.dismiss}
-                        placeholder="0"
-                        placeholderTextColor={Brand.textMuted}
-                        style={styles.textInput}
-                      />
-                      <Text style={styles.unitBadge}>{oneRmUnit.toUpperCase()}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.flexOne}>
-                    <Text style={styles.inputLabel}>REPS PERFORMED</Text>
-                    <View style={styles.inputBox}>
-                      <TextInput
-                        value={oneRmReps}
-                        onChangeText={setOneRmReps}
-                        keyboardType="number-pad"
-                        returnKeyType="done"
-                        onSubmitEditing={Keyboard.dismiss}
-                        placeholder="1"
-                        placeholderTextColor={Brand.textMuted}
-                        style={styles.textInput}
-                      />
-                      <Text style={styles.unitBadge}>REPS</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* 1RM Hero Score Box */}
-                <View style={styles.oneRmHeroBox}>
-                  <Text style={styles.oneRmHeroTag}>ESTIMATED 1-REP MAX</Text>
-                  <Text style={styles.oneRmHeroNumber}>
-                    {estimated1RM} <Text style={styles.unitBadge}>{oneRmUnit}</Text>
-                  </Text>
-                  <Text style={styles.oneRmHeroFormula}>Calculated via Brzycki / Epley equation</Text>
-
-                  {/* Percentage Zones Table */}
-                  <View style={styles.pctZonesTable}>
-                    <View style={styles.pctZoneCol}>
-                      <Text style={styles.pctZonePct}>95%</Text>
-                      <Text style={styles.pctZoneReps}>1-2 Reps</Text>
-                      <Text style={styles.pctZoneWeight}>
-                        {Math.round(estimated1RM * 0.95)} {oneRmUnit}
-                      </Text>
-                    </View>
-
-                    <View style={styles.pctZoneDivider} />
-
-                    <View style={styles.pctZoneCol}>
-                      <Text style={styles.pctZonePct}>85%</Text>
-                      <Text style={styles.pctZoneReps}>5-6 Reps</Text>
-                      <Text style={styles.pctZoneWeight}>
-                        {Math.round(estimated1RM * 0.85)} {oneRmUnit}
-                      </Text>
-                    </View>
-
-                    <View style={styles.pctZoneDivider} />
-
-                    <View style={styles.pctZoneCol}>
-                      <Text style={styles.pctZonePct}>75%</Text>
-                      <Text style={styles.pctZoneReps}>8-10 Reps</Text>
-                      <Text style={styles.pctZoneWeight}>
-                        {Math.round(estimated1RM * 0.75)} {oneRmUnit}
-                      </Text>
-                    </View>
-
-                    <View style={styles.pctZoneDivider} />
-
-                    <View style={styles.pctZoneCol}>
-                      <Text style={styles.pctZonePct}>65%</Text>
-                      <Text style={styles.pctZoneReps}>12-15 Reps</Text>
-                      <Text style={styles.pctZoneWeight}>
-                        {Math.round(estimated1RM * 0.65)} {oneRmUnit}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-            )}
-          </ScrollView>
-
-          {/* Floating Dismiss Button */}
-          {isKeyboardVisible && (
-            <Pressable onPress={Keyboard.dismiss} style={styles.floatingDismissBtn}>
-              <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
-              <Text style={styles.floatingDismissText}>Done</Text>
-            </Pressable>
-          )}
-        </KeyboardAvoidingView>
-      </AnimatedTabScreen>
-    </SafeAreaView>
-  </View>
-);
+          </KeyboardAvoidingView>
+        </AnimatedTabScreen>
+      </SafeAreaView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -571,9 +346,6 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.background,
   },
   flex: {
-    flex: 1,
-  },
-  flexOne: {
     flex: 1,
   },
   safeArea: {
@@ -593,6 +365,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  sectionTag: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  headline: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   doneBtnHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -607,166 +396,204 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  sectionTag: {
-    color: Brand.textSecondary,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  headline: {
-    color: '#FFFFFF',
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  tabBar: {
+  clearHeaderBtn: {
     flexDirection: 'row',
-    backgroundColor: Brand.card,
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Brand.cardElevated,
     borderRadius: Radius.pill,
-    padding: 3,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
   },
-  tabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: Radius.pill,
-  },
-  tabBtnActive: {
-    backgroundColor: Brand.emerald,
-  },
-  tabBtnText: {
+  clearHeaderText: {
     color: Brand.textSecondary,
     fontSize: 12,
     fontWeight: '700',
   },
-  tabBtnTextActive: {
-    color: '#050507',
-    fontWeight: '800',
-  },
-  card: {
+  converterHeroCard: {
     backgroundColor: Brand.card,
     borderRadius: Radius.xl,
     padding: Spacing.four,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
-    gap: Spacing.four,
+    gap: Spacing.three,
   },
-  cardHeader: {
+  unitInputBox: {
+    backgroundColor: Brand.cardElevated,
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    gap: Spacing.one,
+  },
+  unitInputBoxActive: {
+    borderColor: Brand.emerald,
+    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+  },
+  unitInputHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  titleRow: {
+  unitPill: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderRadius: Radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  unitPillText: {
+    color: Brand.emerald,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  unitPillSecondary: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  unitPillTextSecondary: {
+    color: Brand.textSecondary,
+  },
+  unitSymbolLarge: {
+    color: Brand.textMuted,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  bigNumberInput: {
+    color: '#FFFFFF',
+    fontSize: 34,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    padding: 0,
+    marginTop: 2,
+  },
+  numberInputActive: {
+    color: '#FFFFFF',
+  },
+  swapDividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
   },
-  cardTitle: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+  swapLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
-  cardBadge: {
-    color: Brand.emerald,
-    fontSize: 10,
-    fontWeight: '800',
+  swapBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Brand.cardElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
   },
-  inputBlock: {
-    gap: 6,
+  stepperSection: {
+    gap: Spacing.one,
+    paddingTop: Spacing.one,
   },
-  inputLabel: {
+  stepperLabel: {
     color: Brand.textMuted,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  inputBox: {
+  stepperPillsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-    paddingHorizontal: Spacing.three,
-    height: 48,
-  },
-  textInput: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  unitBadge: {
-    color: Brand.emerald,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  steppersRow: {
-    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
-    marginTop: 2,
   },
-  stepperPill: {
+  stepperBtn: {
     flex: 1,
+    minWidth: 40,
     backgroundColor: Brand.cardElevated,
     borderRadius: Radius.xs,
-    paddingVertical: 5,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.06)',
   },
-  stepperPillText: {
+  stepperBtnText: {
     color: Brand.textSecondary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
-  dividerRow: {
+  sectionCard: {
+    backgroundColor: Brand.card,
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
+    gap: Spacing.three,
+  },
+  sectionCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  equalCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Brand.cardElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-  },
-  benchmarksSection: {
-    gap: Spacing.two,
-    paddingTop: Spacing.one,
-  },
-  subHeader: {
+  sectionCardTitle: {
     color: Brand.textMuted,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  benchmarksList: {
+  dumbbellPillsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  dumbbellPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Brand.cardElevated,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
+  },
+  dumbbellPillSelected: {
+    borderColor: Brand.emerald,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  dumbbellPillKg: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  dumbbellPillKgSelected: {
+    color: Brand.emerald,
+    fontWeight: '800',
+  },
+  dumbbellPillArrow: {
+    color: Brand.textMuted,
+    fontSize: 10,
+  },
+  dumbbellPillLbs: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  dumbbellPillLbsSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  benchmarkList: {
     backgroundColor: Brand.cardElevated,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
     overflow: 'hidden',
   },
-  benchmarkRow: {
+  benchmarkCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -775,202 +602,78 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.04)',
   },
-  benchmarkLabel: {
-    color: Brand.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+  benchmarkCardRowSelected: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  benchmarkLeftCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
     flex: 1,
   },
-  benchmarkRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  benchmarkLbs: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  benchmarkArrow: {
-    color: Brand.textMuted,
-    fontSize: 10,
-  },
-  benchmarkKg: {
-    color: Brand.emerald,
-    fontSize: 12,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  unitToggleRow: {
-    flexDirection: 'row',
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.pill,
-    padding: 2,
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-  },
-  miniUnitBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: Radius.pill,
-  },
-  miniUnitActive: {
-    backgroundColor: Brand.emerald,
-  },
-  miniUnitText: {
-    color: Brand.textSecondary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  miniUnitTextActive: {
-    color: '#050507',
-  },
-  barWeightContainer: {
-    gap: 6,
-  },
-  barWeightOptions: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  barOptionBtn: {
-    flex: 1,
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
-    padding: Spacing.two,
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-    alignItems: 'center',
-    gap: 2,
-  },
-  barOptionActive: {
-    borderColor: Brand.emerald,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-  },
-  barOptionTitle: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  barOptionSub: {
-    color: Brand.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  sleeveResultBox: {
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-    gap: Spacing.two,
-  },
-  sleeveTag: {
-    color: Brand.textMuted,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  sleeveHeroValue: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  platesWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  plateDiscChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  benchmarkBadge: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 5,
-    borderWidth: 1.5,
-  },
-  plateDiscDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  plateDiscText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  remainderNotice: {
-    color: Brand.amber,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  oneRmInputsRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  oneRmHeroBox: {
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
-    padding: Spacing.three,
-    alignItems: 'center',
+    borderRadius: Radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderWidth: 1,
-    borderColor: Brand.cardBorder,
-    gap: 4,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
-  oneRmHeroTag: {
-    color: Brand.textMuted,
+  benchmarkBadgeText: {
+    color: Brand.emerald,
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.8,
   },
-  oneRmHeroNumber: {
+  benchmarkNameText: {
+    color: Brand.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+  },
+  benchmarkRightCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  benchmarkLbsText: {
     color: '#FFFFFF',
-    fontSize: 34,
+    fontSize: 12,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
-  oneRmHeroFormula: {
+  benchmarkArrowText: {
     color: Brand.textMuted,
-    fontSize: 11,
-    fontStyle: 'italic',
+    fontSize: 10,
   },
-  pctZonesTable: {
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-between',
-    paddingTop: Spacing.three,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.06)',
-    marginTop: Spacing.two,
-  },
-  pctZoneCol: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 2,
-  },
-  pctZoneDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  pctZonePct: {
+  benchmarkKgText: {
     color: Brand.emerald,
     fontSize: 12,
     fontWeight: '800',
-  },
-  pctZoneReps: {
-    color: Brand.textMuted,
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  pctZoneWeight: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    marginTop: 2,
+  },
+  formulaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    backgroundColor: Brand.card,
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
+  },
+  formulaTextCol: {
+    gap: 2,
+    flex: 1,
+  },
+  formulaTitle: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  formulaDetails: {
+    color: Brand.textMuted,
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
   },
   floatingDismissBtn: {
     position: 'absolute',
@@ -996,8 +699,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.8,
-  },
-  rowPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
 });
