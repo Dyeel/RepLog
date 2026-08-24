@@ -16,6 +16,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecentSessionCard } from '@/components/schedule';
+import { AnimatedTabScreen } from '@/components/ui';
 import { Brand, BottomTabInset, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { groupLogsIntoSessions } from '@/lib/workout-sessions';
@@ -64,72 +65,74 @@ export default function HistoryScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          {/* Header */}
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-            <View>
-              <Text style={styles.title}>History</Text>
-              <Text style={styles.subtitle}>
-                {sessions.length} {sessions.length === 1 ? 'workout session' : 'workout sessions'} logged
-              </Text>
-            </View>
-          </Animated.View>
-
-          {/* Search Box */}
-          <Animated.View entering={FadeInDown.delay(100).duration(450)} style={styles.searchBox}>
-            <MaterialCommunityIcons name="magnify" size={20} color={Brand.textMuted} />
-            <TextInput
-              value={filter}
-              onChangeText={setFilter}
-              placeholder="Search movement or split..."
-              placeholderTextColor={Brand.textMuted}
-              style={styles.searchInput}
-            />
-            {filter ? (
-              <Pressable onPress={() => setFilter('')} style={styles.clearBtn}>
-                <MaterialCommunityIcons name="close-circle" size={18} color={Brand.textMuted} />
-              </Pressable>
-            ) : null}
-          </Animated.View>
-
-          {/* Workout Sessions List */}
-          <FlatList
-            data={sessions}
-            keyExtractor={(item) => item.dateKey}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <View style={styles.emptyCard}>
-                <MaterialCommunityIcons
-                  name="history"
-                  size={44}
-                  color={Brand.textMuted}
-                  style={styles.emptyIcon}
-                />
-                <Text style={styles.emptyTitle}>
-                  {filter ? 'No matching workouts' : 'No history yet'}
-                </Text>
-                <Text style={styles.emptyMessage}>
-                  {filter
-                    ? `No workouts found matching "${filter}".`
-                    : 'Workouts you log will appear here grouped by session date.'}
+        <AnimatedTabScreen>
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>History</Text>
+                <Text style={styles.subtitle}>
+                  {sessions.length} {sessions.length === 1 ? 'workout session' : 'workout sessions'} logged
                 </Text>
               </View>
-            }
-            renderItem={({ item }) => (
-              <RecentSessionCard
-                title={item.title}
-                subtitle={item.dateLabel}
-                exerciseCount={item.exerciseCount}
-                totalSets={item.totalSets}
-                totalVolume={item.totalVolume}
-                unit={item.unit}
-                onPress={() => router.push(`/workout/${item.dateKey}` as any)}
-                onDelete={() => handleDeleteSession(item.dateKey, item.title, item.dateLabel)}
+            </View>
+
+            {/* Search Box */}
+            <View style={styles.searchBox}>
+              <MaterialCommunityIcons name="magnify" size={20} color={Brand.textMuted} />
+              <TextInput
+                value={filter}
+                onChangeText={setFilter}
+                placeholder="Search movement or split..."
+                placeholderTextColor={Brand.textMuted}
+                style={styles.searchInput}
               />
-            )}
-          />
-        </View>
+              {filter ? (
+                <Pressable onPress={() => setFilter('')} style={styles.clearBtn}>
+                  <MaterialCommunityIcons name="close-circle" size={18} color={Brand.textMuted} />
+                </Pressable>
+              ) : null}
+            </View>
+
+            {/* Workout Sessions List */}
+            <FlatList
+              data={sessions}
+              keyExtractor={(item) => item.dateKey}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <View style={styles.emptyCard}>
+                  <MaterialCommunityIcons
+                    name="history"
+                    size={44}
+                    color={Brand.textMuted}
+                    style={styles.emptyIcon}
+                  />
+                  <Text style={styles.emptyTitle}>
+                    {filter ? 'No matching workouts' : 'No history yet'}
+                  </Text>
+                  <Text style={styles.emptyMessage}>
+                    {filter
+                      ? `No workouts found matching "${filter}".`
+                      : 'Workouts you log will appear here grouped by session date.'}
+                  </Text>
+                </View>
+              }
+              renderItem={({ item }) => (
+                <RecentSessionCard
+                  title={item.title}
+                  subtitle={item.dateLabel}
+                  exerciseCount={item.exerciseCount}
+                  totalSets={item.totalSets}
+                  totalVolume={item.totalVolume}
+                  unit={item.unit}
+                  onPress={() => router.push(`/workout/${item.dateKey}` as any)}
+                  onDelete={() => handleDeleteSession(item.dateKey, item.title, item.dateLabel)}
+                />
+              )}
+            />
+          </View>
+        </AnimatedTabScreen>
       </SafeAreaView>
     </View>
   );

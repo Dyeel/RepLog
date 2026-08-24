@@ -14,7 +14,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VolumeChart } from '@/components/analytics/volume-chart';
-import { GradientButton, PulsingDot } from '@/components/ui';
+import { AnimatedTabScreen, GradientButton, PulsingDot } from '@/components/ui';
 import { RecentSessionCard, WeeklyScheduleStrip } from '@/components/schedule';
 import { BottomTabInset, Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
@@ -78,176 +78,174 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header Row */}
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-            <View>
-              <Text style={styles.dateText}>{formatHeaderDate()}</Text>
-              <Text style={styles.headline}>RepLog</Text>
+        <AnimatedTabScreen>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Header Row */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.dateText}>{formatHeaderDate()}</Text>
+                <Text style={styles.headline}>RepLog</Text>
+              </View>
+
+              <Pressable
+                onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
+                style={({ pressed }) => [styles.quickLogBtn, pressed && styles.pressed]}>
+                <MaterialCommunityIcons
+                  name={activeSession ? 'play-circle' : 'plus'}
+                  size={18}
+                  color="#050507"
+                />
+                <Text style={styles.quickLogText}>
+                  {activeSession ? 'Resume Workout' : 'Start Workout'}
+                </Text>
+              </Pressable>
             </View>
 
-            <Pressable
-              onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
-              style={({ pressed }) => [styles.quickLogBtn, pressed && styles.pressed]}>
-              <MaterialCommunityIcons
-                name={activeSession ? 'play-circle' : 'plus'}
-                size={18}
-                color="#050507"
-              />
-              <Text style={styles.quickLogText}>
-                {activeSession ? 'Resume Workout' : 'Start Workout'}
-              </Text>
-            </Pressable>
-          </Animated.View>
+            {/* Active Workout in Progress Banner */}
+            {activeSession && (
+              <View>
+                <Pressable
+                  onPress={() => router.push('/log')}
+                  style={({ pressed }) => [styles.activeSessionBanner, pressed && styles.pressed]}>
+                  <View style={styles.activeBannerLeft}>
+                    <PulsingDot size={8} color={Brand.emerald} />
+                    <View style={styles.activeTextCol}>
+                      <Text style={styles.activeBannerTitle}>WORKOUT IN PROGRESS</Text>
+                      <Text style={styles.activeBannerSubtitle}>
+                        {activeSession.title} · {activeSession.exercises.length}{' '}
+                        {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
+                      </Text>
+                    </View>
+                  </View>
 
-          {/* Active Workout in Progress Banner */}
-          {activeSession && (
-            <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-              <Pressable
-                onPress={() => router.push('/log')}
-                style={({ pressed }) => [styles.activeSessionBanner, pressed && styles.pressed]}>
-                <View style={styles.activeBannerLeft}>
-                  <PulsingDot size={8} color={Brand.emerald} />
-                  <View style={styles.activeTextCol}>
-                    <Text style={styles.activeBannerTitle}>WORKOUT IN PROGRESS</Text>
-                    <Text style={styles.activeBannerSubtitle}>
-                      {activeSession.title} · {activeSession.exercises.length}{' '}
-                      {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
+                  <View style={styles.activeBannerRight}>
+                    <Text style={styles.activeTimerText}>{elapsedText}</Text>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={Brand.emerald} />
+                  </View>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Today's Focus Card */}
+            <View style={styles.heroCard}>
+              <View style={styles.heroHeader}>
+                <View style={styles.heroTagRow}>
+                  <View
+                    style={[
+                      styles.splitBadge,
+                      { backgroundColor: splitColor.bg, borderColor: splitColor.border },
+                    ]}>
+                    <Text style={[styles.splitBadgeText, { color: splitColor.text }]}>
+                      {todayLabel.toUpperCase()} DAY
                     </Text>
                   </View>
+                  {isRest && <Text style={styles.restTag}>Active Recovery</Text>}
                 </View>
 
-                <View style={styles.activeBannerRight}>
-                  <Text style={styles.activeTimerText}>{elapsedText}</Text>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color={Brand.emerald} />
-                </View>
-              </Pressable>
-            </Animated.View>
-          )}
-
-          {/* Today's Focus Card */}
-          <Animated.View entering={FadeInDown.delay(150).duration(450)} style={styles.heroCard}>
-            <View style={styles.heroHeader}>
-              <View style={styles.heroTagRow}>
-                <View
-                  style={[
-                    styles.splitBadge,
-                    { backgroundColor: splitColor.bg, borderColor: splitColor.border },
-                  ]}>
-                  <Text style={[styles.splitBadgeText, { color: splitColor.text }]}>
-                    {todayLabel.toUpperCase()} DAY
-                  </Text>
-                </View>
-                {isRest && <Text style={styles.restTag}>Active Recovery</Text>}
-              </View>
-
-              <Text style={styles.heroSubtitle}>
-                {isRest
-                  ? 'Scheduled rest day. Prioritize nutrition & sleep.'
-                  : 'Time to track your multi-exercise session and progressive overload.'}
-              </Text>
-            </View>
-
-            <GradientButton
-              label={
-                activeSession
-                  ? 'Resume Active Workout'
-                  : isRest
-                  ? 'Log Workout Anyway'
-                  : `Start ${todayLabel} Workout`
-              }
-              icon={<MaterialCommunityIcons name="dumbbell" size={18} color="#050507" />}
-              onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
-              compact
-            />
-          </Animated.View>
-
-          {/* Performance & Compliance Strip */}
-          <Animated.View entering={FadeInDown.delay(200).duration(450)} style={styles.statsStrip}>
-            {/* Metric 1: Weekly Goal */}
-            <View style={styles.statCard}>
-              <View style={styles.statIconBadge}>
-                <MaterialCommunityIcons name="target" size={14} color={Brand.emerald} />
-              </View>
-              <Text style={styles.statValue}>
-                {stats.thisWeekWorkouts}
-                <Text style={styles.statSub}>/{targetWorkouts}</Text>
-              </Text>
-              <Text style={styles.statTitle}>Week Target</Text>
-            </View>
-
-            {/* Metric 2: Total Sets */}
-            <View style={styles.statCard}>
-              <View style={styles.statIconBadge}>
-                <MaterialCommunityIcons name="repeat" size={14} color={Brand.textSecondary} />
-              </View>
-              <Text style={styles.statValue}>{stats.totalSets}</Text>
-              <Text style={styles.statTitle}>Total Sets</Text>
-            </View>
-
-            {/* Metric 3: Volume */}
-            <View style={styles.statCard}>
-              <View style={styles.statIconBadge}>
-                <MaterialCommunityIcons name="weight-kilogram" size={14} color={Brand.textSecondary} />
-              </View>
-              <Text style={styles.statValue}>
-                {stats.totalVolume > 9999
-                  ? `${(stats.totalVolume / 1000).toFixed(1)}k`
-                  : stats.totalVolume.toLocaleString()}
-              </Text>
-              <Text style={styles.statTitle}>Vol ({unitPreference})</Text>
-            </View>
-          </Animated.View>
-
-          {/* 7-Day Volume Progression Bar Chart */}
-          <Animated.View entering={FadeInDown.delay(250).duration(450)}>
-            <VolumeChart logs={logs} unit={unitPreference} />
-          </Animated.View>
-
-          {/* 7-Day Split Strip */}
-          <Animated.View entering={FadeInDown.delay(300).duration(450)}>
-            <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
-          </Animated.View>
-
-          {/* Recent Workouts Section */}
-          <Animated.View entering={FadeInDown.delay(350).duration(450)} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>RECENT WORKOUT SESSIONS</Text>
-              {recentSessions.length > 0 && (
-                <Pressable onPress={() => router.push('/(tabs)/history')}>
-                  <Text style={styles.seeAllText}>View All ({logs.length})</Text>
-                </Pressable>
-              )}
-            </View>
-
-            {recentSessions.length === 0 ? (
-              <View style={styles.emptyCard}>
-                <MaterialCommunityIcons
-                  name="clipboard-text-outline"
-                  size={36}
-                  color={Brand.textMuted}
-                />
-                <Text style={styles.emptyTitle}>No workouts logged yet</Text>
-                <Text style={styles.emptyMessage}>
-                  Tap &quot;Start Workout&quot; above to log your multi-exercise session.
+                <Text style={styles.heroSubtitle}>
+                  {isRest
+                    ? 'Scheduled rest day. Prioritize nutrition & sleep.'
+                    : 'Time to track your multi-exercise session and progressive overload.'}
                 </Text>
               </View>
-            ) : (
-              recentSessions.map((session) => (
-                <RecentSessionCard
-                  key={session.dateKey}
-                  title={session.title}
-                  subtitle={session.dateLabel}
-                  exerciseCount={session.exerciseCount}
-                  totalSets={session.totalSets}
-                  totalVolume={session.totalVolume}
-                  unit={session.unit}
-                  onPress={() => router.push(`/workout/${session.dateKey}` as any)}
-                />
-              ))
-            )}
-          </Animated.View>
-        </ScrollView>
+
+              <GradientButton
+                label={
+                  activeSession
+                    ? 'Resume Active Workout'
+                    : isRest
+                    ? 'Log Workout Anyway'
+                    : `Start ${todayLabel} Workout`
+                }
+                icon={<MaterialCommunityIcons name="dumbbell" size={18} color="#050507" />}
+                onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
+                compact
+              />
+            </View>
+
+            {/* Performance & Compliance Strip */}
+            <View style={styles.statsStrip}>
+              {/* Metric 1: Weekly Goal */}
+              <View style={styles.statCard}>
+                <View style={styles.statIconBadge}>
+                  <MaterialCommunityIcons name="target" size={14} color={Brand.emerald} />
+                </View>
+                <Text style={styles.statValue}>
+                  {stats.thisWeekWorkouts}
+                  <Text style={styles.statSub}>/{targetWorkouts}</Text>
+                </Text>
+                <Text style={styles.statTitle}>Week Target</Text>
+              </View>
+
+              {/* Metric 2: Total Sets */}
+              <View style={styles.statCard}>
+                <View style={styles.statIconBadge}>
+                  <MaterialCommunityIcons name="repeat" size={14} color={Brand.textSecondary} />
+                </View>
+                <Text style={styles.statValue}>{stats.totalSets}</Text>
+                <Text style={styles.statTitle}>Total Sets</Text>
+              </View>
+
+              {/* Metric 3: Volume */}
+              <View style={styles.statCard}>
+                <View style={styles.statIconBadge}>
+                  <MaterialCommunityIcons name="weight-kilogram" size={14} color={Brand.textSecondary} />
+                </View>
+                <Text style={styles.statValue}>
+                  {stats.totalVolume > 9999
+                    ? `${(stats.totalVolume / 1000).toFixed(1)}k`
+                    : stats.totalVolume.toLocaleString()}
+                </Text>
+                <Text style={styles.statTitle}>Vol ({unitPreference})</Text>
+              </View>
+            </View>
+
+            {/* 7-Day Volume Progression Bar Chart */}
+            <VolumeChart logs={logs} unit={unitPreference} />
+
+            {/* 7-Day Split Strip */}
+            <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
+
+            {/* Recent Workouts Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>RECENT WORKOUT SESSIONS</Text>
+                {recentSessions.length > 0 && (
+                  <Pressable onPress={() => router.push('/(tabs)/history')}>
+                    <Text style={styles.seeAllText}>View All ({logs.length})</Text>
+                  </Pressable>
+                )}
+              </View>
+
+              {recentSessions.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <MaterialCommunityIcons
+                    name="clipboard-text-outline"
+                    size={36}
+                    color={Brand.textMuted}
+                  />
+                  <Text style={styles.emptyTitle}>No workouts logged yet</Text>
+                  <Text style={styles.emptyMessage}>
+                    Tap &quot;Start Workout&quot; above to log your multi-exercise session.
+                  </Text>
+                </View>
+              ) : (
+                recentSessions.map((session) => (
+                  <RecentSessionCard
+                    key={session.dateKey}
+                    title={session.title}
+                    subtitle={session.dateLabel}
+                    exerciseCount={session.exerciseCount}
+                    totalSets={session.totalSets}
+                    totalVolume={session.totalVolume}
+                    unit={session.unit}
+                    onPress={() => router.push(`/workout/${session.dateKey}` as any)}
+                  />
+                ))
+              )}
+            </View>
+          </ScrollView>
+        </AnimatedTabScreen>
       </SafeAreaView>
     </View>
   );

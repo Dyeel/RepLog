@@ -18,6 +18,7 @@ import {
   LogWeightModal,
   StrengthProgressionChart,
 } from '@/components/analytics';
+import { AnimatedTabScreen } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { formatDateTime } from '@/lib/utils';
@@ -55,78 +56,76 @@ export default function ProgressScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-            <View>
-              <Text style={styles.sectionTag}>BODY & STRENGTH OVERLOAD</Text>
-              <Text style={styles.headline}>Progress</Text>
+        <AnimatedTabScreen>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.sectionTag}>BODY & STRENGTH OVERLOAD</Text>
+                <Text style={styles.headline}>Progress</Text>
+              </View>
+
+              <Pressable
+                onPress={() => setIsLogWeightVisible(true)}
+                style={({ pressed }) => [styles.addLogBtn, pressed && styles.pressed]}>
+                <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
+                <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
+              </Pressable>
             </View>
 
-            <Pressable
-              onPress={() => setIsLogWeightVisible(true)}
-              style={({ pressed }) => [styles.addLogBtn, pressed && styles.pressed]}>
-              <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
-              <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
-            </Pressable>
-          </Animated.View>
-
-          {/* 1. Interactive Bodyweight SVG Progression Curve */}
-          <Animated.View entering={FadeInDown.delay(100).duration(450)}>
+            {/* 1. Interactive Bodyweight SVG Progression Curve */}
             <BodyweightChart
               logs={bodyWeightLogs}
               unit={unitPreference}
               onOpenLogModal={() => setIsLogWeightVisible(true)}
             />
-          </Animated.View>
 
-          {/* 2. Exercise Lift Strength 1RM Progression Curve */}
-          <Animated.View entering={FadeInDown.delay(200).duration(450)}>
+            {/* 2. Exercise Lift Strength 1RM Progression Curve */}
             <StrengthProgressionChart logs={logs} unit={unitPreference} />
-          </Animated.View>
 
-          {/* 3. Scale Weigh-in History */}
-          <Animated.View entering={FadeInDown.delay(300).duration(450)} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>SCALE WEIGH-IN HISTORY</Text>
-              <Text style={styles.historyCount}>{bodyWeightLogs.length} entries</Text>
-            </View>
-
-            {bodyWeightLogs.length === 0 ? (
-              <View style={styles.emptyHistory}>
-                <Text style={styles.emptyHistoryText}>No weigh-in logs recorded yet.</Text>
-                <Text style={styles.emptyHistorySub}>
-                  Tap &quot;Log Weigh-In&quot; above to begin tracking your weight trend.
-                </Text>
+            {/* 3. Scale Weigh-in History */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>SCALE WEIGH-IN HISTORY</Text>
+                <Text style={styles.historyCount}>{bodyWeightLogs.length} entries</Text>
               </View>
-            ) : (
-              <View style={styles.historyList}>
-                {bodyWeightLogs.slice(0, 10).map((entry) => (
-                  <View key={entry.id} style={styles.historyRow}>
-                    <View style={styles.historyLeft}>
-                      <View style={styles.weightNumberRow}>
-                        <Text style={styles.historyWeight}>{entry.weight}</Text>
-                        <Text style={styles.historyUnit}>{entry.unit}</Text>
+
+              {bodyWeightLogs.length === 0 ? (
+                <View style={styles.emptyHistory}>
+                  <Text style={styles.emptyHistoryText}>No weigh-in logs recorded yet.</Text>
+                  <Text style={styles.emptyHistorySub}>
+                    Tap &quot;Log Weigh-In&quot; above to begin tracking your weight trend.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.historyList}>
+                  {bodyWeightLogs.slice(0, 10).map((entry) => (
+                    <View key={entry.id} style={styles.historyRow}>
+                      <View style={styles.historyLeft}>
+                        <View style={styles.weightNumberRow}>
+                          <Text style={styles.historyWeight}>{entry.weight}</Text>
+                          <Text style={styles.historyUnit}>{entry.unit}</Text>
+                        </View>
+                        <Text style={styles.historyDate}>{formatDateTime(entry.timestamp)}</Text>
+                        {entry.note ? <Text style={styles.historyNote}>{entry.note}</Text> : null}
                       </View>
-                      <Text style={styles.historyDate}>{formatDateTime(entry.timestamp)}</Text>
-                      {entry.note ? <Text style={styles.historyNote}>{entry.note}</Text> : null}
-                    </View>
 
-                    <Pressable
-                      onPress={() => handleDeleteEntry(entry.id, entry.weight)}
-                      style={styles.deleteBtn}>
-                      <MaterialCommunityIcons
-                        name="trash-can-outline"
-                        size={16}
-                        color={Brand.danger}
-                      />
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Animated.View>
-        </ScrollView>
+                      <Pressable
+                        onPress={() => handleDeleteEntry(entry.id, entry.weight)}
+                        style={styles.deleteBtn}>
+                        <MaterialCommunityIcons
+                          name="trash-can-outline"
+                          size={16}
+                          color={Brand.danger}
+                        />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </AnimatedTabScreen>
 
         {/* Log Weight Modal Sheet */}
         <LogWeightModal

@@ -16,6 +16,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
+import { AnimatedTabScreen } from '@/components/ui';
 import { calculatePlates } from '@/lib/plate-calculator';
 import { calculate1RM, convertWeight } from '@/lib/utils';
 import { WeightUnit } from '@/types';
@@ -110,13 +111,14 @@ export default function CalculatorScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
+        <AnimatedTabScreen>
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled">
             {/* Screen Header */}
             <View style={styles.header}>
               <View style={styles.headerTitleRow}>
@@ -557,9 +559,10 @@ export default function CalculatorScreen() {
             </Pressable>
           )}
         </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
-  );
+      </AnimatedTabScreen>
+    </SafeAreaView>
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

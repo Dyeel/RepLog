@@ -10,11 +10,11 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WeeklyScheduleStrip } from '@/components/schedule';
-import { Brand, BottomTabInset, Radius, Spacing } from '@/constants/theme';
+import { AnimatedTabScreen } from '@/components/ui';
+import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { getDefaultSplit } from '@/lib/defaults';
 import { getTodayDayOfWeek } from '@/lib/utils';
@@ -58,130 +58,130 @@ export default function ScheduleScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-            <Text style={styles.title}>Split Architecture</Text>
-            <Text style={styles.subtitle}>Customize weekly training allocation</Text>
-          </Animated.View>
+        <AnimatedTabScreen>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Split Architecture</Text>
+              <Text style={styles.subtitle}>Customize weekly training allocation</Text>
+            </View>
 
-          {/* 7-Day Visual Strip */}
-          <Animated.View entering={FadeInDown.delay(100).duration(450)}>
+            {/* 7-Day Visual Strip */}
             <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
-          </Animated.View>
 
-          {/* Frequency Selector */}
-          <Animated.View entering={FadeInDown.delay(200).duration(450)} style={styles.section}>
-            <Text style={styles.sectionLabel}>TRAINING FREQUENCY</Text>
-            <View style={styles.frequencyRow}>
-              {FREQUENCIES.map((option) => {
-                const selected = frequency === option;
-                return (
-                  <Pressable
-                    key={option}
-                    onPress={() => handleFrequencyChange(option)}
-                    style={({ pressed }) => [
-                      styles.frequencyButton,
-                      selected && styles.frequencyButtonSelected,
-                      pressed && styles.pressed,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.frequencyText,
-                        selected && styles.frequencyTextSelected,
+            {/* Frequency Selector */}
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>TRAINING FREQUENCY</Text>
+              <View style={styles.frequencyRow}>
+                {FREQUENCIES.map((option) => {
+                  const selected = frequency === option;
+                  return (
+                    <Pressable
+                      key={option}
+                      onPress={() => handleFrequencyChange(option)}
+                      style={({ pressed }) => [
+                        styles.frequencyButton,
+                        selected && styles.frequencyButtonSelected,
+                        pressed && styles.pressed,
                       ]}>
-                      {option}D
-                    </Text>
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.frequencyText,
+                          selected && styles.frequencyTextSelected,
+                        ]}>
+                        {option}D
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={styles.presetNotice}>
+                <MaterialCommunityIcons name="information-outline" size={15} color={Brand.textMuted} />
+                <Text style={styles.helper}>
+                  {Object.entries(defaultSplit)
+                    .filter(([, label]) => label !== 'Rest')
+                    .map(([day, label]) => `${DAY_LABELS[day as keyof typeof DAY_LABELS].slice(0, 3)}: ${label}`)
+                    .join(' · ')}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.presetNotice}>
-              <MaterialCommunityIcons name="information-outline" size={15} color={Brand.textMuted} />
-              <Text style={styles.helper}>
-                {Object.entries(defaultSplit)
-                  .filter(([, label]) => label !== 'Rest')
-                  .map(([day, label]) => `${DAY_LABELS[day as keyof typeof DAY_LABELS].slice(0, 3)}: ${label}`)
-                  .join(' · ')}
-              </Text>
-            </View>
-          </Animated.View>
+            {/* Day-by-Day Editor */}
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>CUSTOMIZE SCHEDULE</Text>
 
-          {/* Day-by-Day Editor */}
-          <Animated.View entering={FadeInDown.delay(300).duration(450)} style={styles.section}>
-            <Text style={styles.sectionLabel}>CUSTOMIZE SCHEDULE</Text>
+              <View style={styles.daysList}>
+                {DAYS_OF_WEEK.map((day) => {
+                  const entry = schedule.find((item) => item.day === day);
+                  const label = entry?.label ?? 'Rest';
+                  const isEditing = editingDay === day;
+                  const isToday = day === today;
+                  const isRest = label.toLowerCase() === 'rest';
 
-            <View style={styles.daysList}>
-              {DAYS_OF_WEEK.map((day) => {
-                const entry = schedule.find((item) => item.day === day);
-                const label = entry?.label ?? 'Rest';
-                const isEditing = editingDay === day;
-                const isToday = day === today;
-                const isRest = label.toLowerCase() === 'rest';
-
-                return (
-                  <View key={day} style={[styles.dayCard, isToday && styles.dayCardToday]}>
-                    <View style={styles.dayHeader}>
-                      <View style={styles.dayTitleRow}>
-                        <Text style={[styles.dayName, isToday && styles.dayNameToday]}>
-                          {DAY_LABELS[day]}
-                        </Text>
-                        {isToday && <Text style={styles.todayIndicator}>TODAY</Text>}
-                      </View>
-
-                      <Pressable
-                        onPress={() => setEditingDay(isEditing ? null : day)}
-                        style={[styles.labelBadge, isRest && styles.labelBadgeRest]}>
-                        <Text style={[styles.labelBadgeText, isRest && styles.labelBadgeTextRest]}>
-                          {label}
-                        </Text>
-                        <MaterialCommunityIcons
-                          name={isEditing ? 'chevron-up' : 'pencil-outline'}
-                          size={14}
-                          color={isRest ? Brand.textMuted : '#FFFFFF'}
-                        />
-                      </Pressable>
-                    </View>
-
-                    {/* Tag Options Dropdown */}
-                    {isEditing && (
-                      <View style={styles.labelPicker}>
-                        <Text style={styles.pickerTitle}>Target focus for {DAY_LABELS[day]}:</Text>
-                        <View style={styles.optionsWrap}>
-                          {WORKOUT_LABELS.map((option) => {
-                            const isSelected = label === option;
-                            return (
-                              <Pressable
-                                key={option}
-                                onPress={() => {
-                                  updateScheduleDay(day, option);
-                                  setEditingDay(null);
-                                }}
-                                style={({ pressed }) => [
-                                  styles.labelOption,
-                                  isSelected && styles.labelOptionActive,
-                                  pressed && styles.pressed,
-                                ]}>
-                                <Text
-                                  style={[
-                                    styles.labelOptionText,
-                                    isSelected && styles.labelOptionTextActive,
-                                  ]}>
-                                  {option}
-                                </Text>
-                              </Pressable>
-                            );
-                          })}
+                  return (
+                    <View key={day} style={[styles.dayCard, isToday && styles.dayCardToday]}>
+                      <View style={styles.dayHeader}>
+                        <View style={styles.dayTitleRow}>
+                          <Text style={[styles.dayName, isToday && styles.dayNameToday]}>
+                            {DAY_LABELS[day]}
+                          </Text>
+                          {isToday && <Text style={styles.todayIndicator}>TODAY</Text>}
                         </View>
+
+                        <Pressable
+                          onPress={() => setEditingDay(isEditing ? null : day)}
+                          style={[styles.labelBadge, isRest && styles.labelBadgeRest]}>
+                          <Text style={[styles.labelBadgeText, isRest && styles.labelBadgeTextRest]}>
+                            {label}
+                          </Text>
+                          <MaterialCommunityIcons
+                            name={isEditing ? 'chevron-up' : 'pencil-outline'}
+                            size={14}
+                            color={isRest ? Brand.textMuted : '#FFFFFF'}
+                          />
+                        </Pressable>
                       </View>
-                    )}
-                  </View>
-                );
-              })}
+
+                      {/* Tag Options Dropdown */}
+                      {isEditing && (
+                        <View style={styles.labelPicker}>
+                          <Text style={styles.pickerTitle}>Target focus for {DAY_LABELS[day]}:</Text>
+                          <View style={styles.optionsWrap}>
+                            {WORKOUT_LABELS.map((option) => {
+                              const isSelected = label === option;
+                              return (
+                                <Pressable
+                                  key={option}
+                                  onPress={() => {
+                                    updateScheduleDay(day, option);
+                                    setEditingDay(null);
+                                  }}
+                                  style={({ pressed }) => [
+                                    styles.labelOption,
+                                    isSelected && styles.labelOptionActive,
+                                    pressed && styles.pressed,
+                                  ]}>
+                                  <Text
+                                    style={[
+                                      styles.labelOptionText,
+                                      isSelected && styles.labelOptionTextActive,
+                                    ]}>
+                                    {option}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
             </View>
-          </Animated.View>
-        </ScrollView>
+          </ScrollView>
+        </AnimatedTabScreen>
       </SafeAreaView>
     </View>
   );
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   header: {
-    gap: 4,
+    gap: 2,
   },
   title: {
     color: '#FFFFFF',
@@ -219,7 +219,6 @@ const styles = StyleSheet.create({
   subtitle: {
     color: Brand.textSecondary,
     fontSize: 13,
-    fontWeight: '500',
   },
   section: {
     gap: Spacing.two,
@@ -236,35 +235,35 @@ const styles = StyleSheet.create({
   },
   frequencyButton: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Radius.md,
     backgroundColor: Brand.card,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: Brand.cardBorder,
   },
   frequencyButtonSelected: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
+    backgroundColor: Brand.emerald,
+    borderColor: Brand.emerald,
   },
   frequencyText: {
     color: Brand.textSecondary,
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   frequencyTextSelected: {
     color: '#050507',
+    fontWeight: '800',
   },
   presetNotice: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingTop: 4,
+    paddingHorizontal: Spacing.one,
   },
   helper: {
     color: Brand.textMuted,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
     flex: 1,
   },
   daysList: {
@@ -279,13 +278,13 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   dayCardToday: {
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    backgroundColor: Brand.cardElevated,
+    borderColor: Brand.emerald,
+    backgroundColor: 'rgba(16, 185, 129, 0.04)',
   },
   dayHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   dayTitleRow: {
     flexDirection: 'row',
@@ -298,49 +297,54 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dayNameToday: {
-    color: '#FFFFFF',
+    color: Brand.emerald,
+    fontWeight: '800',
   },
   todayIndicator: {
-    color: Brand.emerald,
-    fontSize: 10,
+    backgroundColor: Brand.emerald,
+    color: '#050507',
+    fontSize: 9,
     fontWeight: '800',
-    backgroundColor: Brand.emeraldMuted,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: Radius.xs,
+    borderRadius: Radius.pill,
+    letterSpacing: 0.5,
   },
   labelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    backgroundColor: Brand.cardElevated,
+    borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,
     paddingVertical: 6,
-    borderRadius: Radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: Brand.cardBorder,
   },
   labelBadgeRest: {
     backgroundColor: 'transparent',
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'transparent',
   },
   labelBadgeText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   labelBadgeTextRest: {
     color: Brand.textMuted,
   },
   labelPicker: {
-    paddingTop: Spacing.two,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: Brand.cardElevated,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
     gap: Spacing.two,
+    marginTop: Spacing.one,
   },
   pickerTitle: {
-    color: Brand.textMuted,
-    fontSize: 10,
+    color: Brand.textSecondary,
+    fontSize: 11,
     fontWeight: '700',
   },
   optionsWrap: {
@@ -349,21 +353,21 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   labelOption: {
-    paddingHorizontal: Spacing.two,
+    backgroundColor: Brand.card,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
     paddingVertical: 6,
-    borderRadius: Radius.sm,
-    backgroundColor: Brand.cardElevated,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
   },
   labelOptionActive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
+    backgroundColor: Brand.emerald,
+    borderColor: Brand.emerald,
   },
   labelOptionText: {
     color: Brand.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   labelOptionTextActive: {
     color: '#050507',
