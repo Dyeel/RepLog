@@ -12,6 +12,11 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
@@ -48,6 +53,9 @@ const DUMBBELL_PRESETS = [
   { kg: '40', lbs: '88.2' },
 ];
 
+const NEGATIVE_DELTAS = [-10, -5, -2.5, -1];
+const POSITIVE_DELTAS = [+1, +2.5, +5, +10];
+
 export default function CalculatorScreen() {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
@@ -55,6 +63,13 @@ export default function CalculatorScreen() {
   const [kgVal, setKgVal] = useState('100');
   const [lbsVal, setLbsVal] = useState('220.5');
   const [activeInput, setActiveInput] = useState<'kg' | 'lbs'>('kg');
+
+  // Animated Swap Rotation
+  const swapRotation = useSharedValue(0);
+
+  const swapAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${swapRotation.value}deg` }],
+  }));
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
@@ -89,6 +104,18 @@ export default function CalculatorScreen() {
     } else {
       setKgVal(convertWeight(val, 'lbs', 'kg'));
     }
+  };
+
+  const handleSwapPress = () => {
+    // 1. Rotate the swap badge 180 degrees
+    swapRotation.value = withSpring(swapRotation.value + 180, {
+      damping: 14,
+      stiffness: 160,
+    });
+
+    // 2. Toggle active input focus
+    const nextInput = activeInput === 'kg' ? 'lbs' : 'kg';
+    setActiveInput(nextInput);
   };
 
   const adjustWeight = (delta: number) => {
@@ -181,12 +208,19 @@ export default function CalculatorScreen() {
                   />
                 </Pressable>
 
-                {/* Swap Icon Divider */}
+                {/* Interactive Functional Swap Button Divider */}
                 <View style={styles.swapDividerRow}>
                   <View style={styles.swapLine} />
-                  <View style={styles.swapBadge}>
-                    <MaterialCommunityIcons name="swap-vertical" size={18} color={Brand.emerald} />
-                  </View>
+                  <Pressable
+                    onPress={handleSwapPress}
+                    style={({ pressed }) => [
+                      styles.swapBadgeBtn,
+                      pressed && styles.pressed,
+                    ]}>
+                    <Animated.View style={swapAnimatedStyle}>
+                      <MaterialCommunityIcons name="swap-vertical" size={20} color={Brand.emerald} />
+                    </Animated.View>
+                  </Pressable>
                   <View style={styles.swapLine} />
                 </View>
 
@@ -219,19 +253,41 @@ export default function CalculatorScreen() {
                   />
                 </Pressable>
 
-                {/* Quick Increment Steppers Row */}
+                {/* Quick Increment Steppers Grid (Clean 4-column balanced rows, 0 leak) */}
                 <View style={styles.stepperSection}>
                   <Text style={styles.stepperLabel}>
                     QUICK ADJUST ({activeInput.toUpperCase()})
                   </Text>
-                  <View style={styles.stepperPillsRow}>
-                    {[-10, -5, -2.5, -1, +1, +2.5, +5, +10].map((delta) => (
+
+                  {/* Decrements Row */}
+                  <View style={styles.stepperRow}>
+                    {NEGATIVE_DELTAS.map((delta) => (
                       <Pressable
                         key={delta}
                         onPress={() => adjustWeight(delta)}
-                        style={({ pressed }) => [styles.stepperBtn, pressed && styles.pressed]}>
-                        <Text style={styles.stepperBtnText}>
-                          {delta > 0 ? `+${delta}` : delta}
+                        style={({ pressed }) => [
+                          styles.stepperBtn,
+                          styles.stepperBtnMinus,
+                          pressed && styles.pressed,
+                        ]}>
+                        <Text style={styles.stepperBtnText}>{delta}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  {/* Increments Row */}
+                  <View style={styles.stepperRow}>
+                    {POSITIVE_DELTAS.map((delta) => (
+                      <Pressable
+                        key={delta}
+                        onPress={() => adjustWeight(delta)}
+                        style={({ pressed }) => [
+                          styles.stepperBtn,
+                          styles.stepperBtnPlus,
+                          pressed && styles.pressed,
+                        ]}>
+                        <Text style={[styles.stepperBtnText, styles.stepperBtnPlusText]}>
+                          +{delta}
                         </Text>
                       </Pressable>
                     ))}
@@ -477,18 +533,23 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
-  swapBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  swapBadgeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Brand.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
+    borderWidth: 1.5,
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+    shadowColor: Brand.emerald,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   stepperSection: {
-    gap: Spacing.one,
+    gap: 8,
     paddingTop: Spacing.one,
   },
   stepperLabel: {
@@ -497,27 +558,36 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  stepperPillsRow: {
+  stepperRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 6,
+    width: '100%',
   },
   stepperBtn: {
     flex: 1,
-    minWidth: 36,
     backgroundColor: Brand.cardElevated,
     borderRadius: Radius.xs,
-    paddingVertical: 6,
+    paddingVertical: 9,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.06)',
   },
+  stepperBtnMinus: {
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  stepperBtnPlus: {
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+  },
   stepperBtnText: {
     color: Brand.textSecondary,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+  },
+  stepperBtnPlusText: {
+    color: Brand.emerald,
   },
   sectionCard: {
     backgroundColor: Brand.card,
