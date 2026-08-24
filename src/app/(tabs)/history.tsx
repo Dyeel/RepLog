@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecentSessionCard } from '@/components/schedule';
@@ -65,17 +66,17 @@ export default function HistoryScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           {/* Header */}
-          <View style={styles.header}>
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
             <View>
               <Text style={styles.title}>History</Text>
               <Text style={styles.subtitle}>
                 {sessions.length} {sessions.length === 1 ? 'workout session' : 'workout sessions'} logged
               </Text>
             </View>
-          </View>
+          </Animated.View>
 
           {/* Search Box */}
-          <View style={styles.searchBox}>
+          <Animated.View entering={FadeInDown.delay(100).duration(450)} style={styles.searchBox}>
             <MaterialCommunityIcons name="magnify" size={20} color={Brand.textMuted} />
             <TextInput
               value={filter}
@@ -89,7 +90,7 @@ export default function HistoryScreen() {
                 <MaterialCommunityIcons name="close-circle" size={18} color={Brand.textMuted} />
               </Pressable>
             ) : null}
-          </View>
+          </Animated.View>
 
           {/* Workout Sessions List */}
           <FlatList

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WeeklyScheduleStrip } from '@/components/schedule';
@@ -59,16 +60,18 @@ export default function ScheduleScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
-          <View style={styles.header}>
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
             <Text style={styles.title}>Split Architecture</Text>
             <Text style={styles.subtitle}>Customize weekly training allocation</Text>
-          </View>
+          </Animated.View>
 
           {/* 7-Day Visual Strip */}
-          <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
+          <Animated.View entering={FadeInDown.delay(100).duration(450)}>
+            <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
+          </Animated.View>
 
           {/* Frequency Selector */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(200).duration(450)} style={styles.section}>
             <Text style={styles.sectionLabel}>TRAINING FREQUENCY</Text>
             <View style={styles.frequencyRow}>
               {FREQUENCIES.map((option) => {
@@ -103,10 +106,10 @@ export default function ScheduleScreen() {
                   .join(' · ')}
               </Text>
             </View>
-          </View>
+          </Animated.View>
 
           {/* Day-by-Day Editor */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(300).duration(450)} style={styles.section}>
             <Text style={styles.sectionLabel}>CUSTOMIZE SCHEDULE</Text>
 
             <View style={styles.daysList}>
@@ -177,7 +180,7 @@ export default function ScheduleScreen() {
                 );
               })}
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
     </View>

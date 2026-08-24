@@ -30,19 +30,51 @@ export default function RootLayout() {
     <WorkoutProvider>
       <ThemeProvider value={RepLogTheme}>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 250,
+          }}>
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              animation: 'fade',
+            }}
+          />
+          <Stack.Screen
+            name="welcome"
+            options={{
+              headerShown: false,
+              animation: 'fade',
+              gestureEnabled: false,
+            }}
+          />
           <Stack.Screen
             name="log"
             options={{
               presentation: 'modal',
+              animation: 'slide_from_bottom',
+              animationDuration: 280,
               headerShown: false,
               gestureEnabled: false,
             }}
           />
-          <Stack.Screen name="workout/[date]" options={{ headerShown: false }} />
-          <Stack.Screen name="history/[id]" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="workout/[date]"
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="history/[id]"
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
         </Stack>
       </ThemeProvider>
     </WorkoutProvider>
