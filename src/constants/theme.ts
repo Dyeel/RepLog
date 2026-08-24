@@ -243,7 +243,7 @@ export const Radius = {
   pill: 999,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 94, default: 78 }) ?? 78;
+export const BottomTabInset = Platform.select({ ios: 78, default: 70 }) ?? 70;
 export const MaxContentWidth = 800;
 
 // Unified disciplined monochrome split badge styling

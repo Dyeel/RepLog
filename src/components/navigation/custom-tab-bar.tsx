@@ -55,7 +55,16 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   );
 
   return (
-    <View style={[styles.outerContainer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingBottom:
+            Platform.OS === 'web'
+              ? 10
+              : Math.max(insets.bottom, 8),
+        },
+      ]}>
       <View
         style={[
           styles.tabBarCard,
