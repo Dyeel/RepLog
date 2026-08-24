@@ -8,6 +8,15 @@ export default function TabsLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+        },
       }}>
       {/* 1. Today */}
       <Tabs.Screen
