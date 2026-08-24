@@ -84,18 +84,26 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* 5. Progress */}
+      {/* 5. Profile & Progression */}
       <Tabs.Screen
-        name="progress"
+        name="profile"
         options={{
-          title: 'Progress',
+          title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (
             <MaterialCommunityIcons
-              name={focused ? 'chart-line' : 'chart-line-variant'}
+              name={focused ? 'account-circle' : 'account-circle-outline'}
               size={size}
               color={color}
             />
           ),
+        }}
+      />
+
+      {/* Legacy Progress Tab Redirect / Hidden */}
+      <Tabs.Screen
+        name="progress"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

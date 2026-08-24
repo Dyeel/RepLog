@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
   Keyboard,
@@ -11,7 +12,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -19,8 +19,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { AnimatedTabScreen } from '@/components/ui';
+import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { convertWeight } from '@/lib/utils';
 
 type BenchmarkCard = {
@@ -62,7 +62,7 @@ export default function CalculatorScreen() {
   // Live Synchronized Dual Inputs
   const [kgVal, setKgVal] = useState('100');
   const [lbsVal, setLbsVal] = useState('220.5');
-  const [activeInput, setActiveInput] = useState<'kg' | 'lbs'>('kg');
+  const [conversionDirection, setConversionDirection] = useState<'kg_to_lbs' | 'lbs_to_kg'>('kg_to_lbs');
 
   // Animated Swap Rotation
   const swapRotation = useSharedValue(0);
@@ -87,7 +87,6 @@ export default function CalculatorScreen() {
   }, []);
 
   const handleKgChange = (val: string) => {
-    setActiveInput('kg');
     setKgVal(val);
     if (!val || isNaN(parseFloat(val))) {
       setLbsVal('');
@@ -97,7 +96,6 @@ export default function CalculatorScreen() {
   };
 
   const handleLbsChange = (val: string) => {
-    setActiveInput('lbs');
     setLbsVal(val);
     if (!val || isNaN(parseFloat(val))) {
       setKgVal('');
@@ -113,13 +111,12 @@ export default function CalculatorScreen() {
       stiffness: 160,
     });
 
-    // 2. Toggle active input focus
-    const nextInput = activeInput === 'kg' ? 'lbs' : 'kg';
-    setActiveInput(nextInput);
+    // 2. Swap the top and bottom positions!
+    setConversionDirection((prev) => (prev === 'kg_to_lbs' ? 'lbs_to_kg' : 'kg_to_lbs'));
   };
 
   const adjustWeight = (delta: number) => {
-    if (activeInput === 'kg') {
+    if (conversionDirection === 'kg_to_lbs') {
       const current = parseFloat(kgVal) || 0;
       const next = Math.max(0, Math.round((current + delta) * 10) / 10);
       handleKgChange(next.toString());
@@ -131,6 +128,7 @@ export default function CalculatorScreen() {
   };
 
   const setExactKg = (kg: string) => {
+    setConversionDirection('kg_to_lbs');
     handleKgChange(kg);
   };
 
@@ -143,6 +141,70 @@ export default function CalculatorScreen() {
     setKgVal('');
     setLbsVal('');
   };
+
+  const isKgOnTop = conversionDirection === 'kg_to_lbs';
+
+  const renderKgBox = (isTop: boolean) => (
+    <Pressable
+      key="kg-box"
+      onPress={() => !isTop && handleSwapPress()}
+      style={[
+        styles.unitInputBox,
+        isTop && styles.unitInputBoxActive,
+      ]}>
+      <View style={styles.unitInputHeader}>
+        <View style={[styles.unitPill, !isTop && styles.unitPillSecondary]}>
+          <Text style={[styles.unitPillText, !isTop && styles.unitPillTextSecondary]}>
+            KILOGRAMS
+          </Text>
+        </View>
+        <Text style={styles.unitSymbolLarge}>KG</Text>
+      </View>
+
+      <TextInput
+        value={kgVal}
+        onChangeText={handleKgChange}
+        onFocus={() => !isTop && handleSwapPress()}
+        keyboardType="decimal-pad"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
+        placeholder="0"
+        placeholderTextColor={Brand.textMuted}
+        style={styles.bigNumberInput}
+      />
+    </Pressable>
+  );
+
+  const renderLbsBox = (isTop: boolean) => (
+    <Pressable
+      key="lbs-box"
+      onPress={() => !isTop && handleSwapPress()}
+      style={[
+        styles.unitInputBox,
+        isTop && styles.unitInputBoxActive,
+      ]}>
+      <View style={styles.unitInputHeader}>
+        <View style={[styles.unitPill, isTop ? styles.unitPill : styles.unitPillSecondary]}>
+          <Text style={[styles.unitPillText, !isTop && styles.unitPillTextSecondary]}>
+            POUNDS
+          </Text>
+        </View>
+        <Text style={styles.unitSymbolLarge}>LBS</Text>
+      </View>
+
+      <TextInput
+        value={lbsVal}
+        onChangeText={handleLbsChange}
+        onFocus={() => !isTop && handleSwapPress()}
+        keyboardType="decimal-pad"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
+        placeholder="0"
+        placeholderTextColor={Brand.textMuted}
+        style={styles.bigNumberInput}
+      />
+    </Pressable>
+  );
 
   return (
     <View style={styles.container}>
@@ -161,7 +223,9 @@ export default function CalculatorScreen() {
                 <View style={styles.headerTitleRow}>
                   <View>
                     <Text style={styles.sectionTag}>PRECISION CONVERTER</Text>
-                    <Text style={styles.headline}>KG ⇄ LBS</Text>
+                    <Text style={styles.headline}>
+                      {isKgOnTop ? 'KG ⇄ LBS' : 'LBS ⇄ KG'}
+                    </Text>
                   </View>
 
                   <View style={styles.headerActions}>
@@ -181,34 +245,10 @@ export default function CalculatorScreen() {
 
               {/* Primary Interactive Dual Converter Hero Card */}
               <View style={styles.converterHeroCard}>
-                {/* 1. Kilograms Card Box */}
-                <Pressable
-                  onPress={() => setActiveInput('kg')}
-                  style={[
-                    styles.unitInputBox,
-                    activeInput === 'kg' && styles.unitInputBoxActive,
-                  ]}>
-                  <View style={styles.unitInputHeader}>
-                    <View style={styles.unitPill}>
-                      <Text style={styles.unitPillText}>KILOGRAMS</Text>
-                    </View>
-                    <Text style={styles.unitSymbolLarge}>KG</Text>
-                  </View>
+                {/* Top Unit Box (Source) */}
+                {isKgOnTop ? renderKgBox(true) : renderLbsBox(true)}
 
-                  <TextInput
-                    value={kgVal}
-                    onChangeText={handleKgChange}
-                    onFocus={() => setActiveInput('kg')}
-                    keyboardType="decimal-pad"
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                    placeholder="0"
-                    placeholderTextColor={Brand.textMuted}
-                    style={styles.bigNumberInput}
-                  />
-                </Pressable>
-
-                {/* Interactive Functional Swap Button Divider */}
+                {/* Interactive Functional Swap Button Divider (Swaps Top and Bottom) */}
                 <View style={styles.swapDividerRow}>
                   <View style={styles.swapLine} />
                   <Pressable
@@ -224,39 +264,13 @@ export default function CalculatorScreen() {
                   <View style={styles.swapLine} />
                 </View>
 
-                {/* 2. Pounds Card Box */}
-                <Pressable
-                  onPress={() => setActiveInput('lbs')}
-                  style={[
-                    styles.unitInputBox,
-                    activeInput === 'lbs' && styles.unitInputBoxActive,
-                  ]}>
-                  <View style={styles.unitInputHeader}>
-                    <View style={[styles.unitPill, styles.unitPillSecondary]}>
-                      <Text style={[styles.unitPillText, styles.unitPillTextSecondary]}>
-                        POUNDS
-                      </Text>
-                    </View>
-                    <Text style={styles.unitSymbolLarge}>LBS</Text>
-                  </View>
-
-                  <TextInput
-                    value={lbsVal}
-                    onChangeText={handleLbsChange}
-                    onFocus={() => setActiveInput('lbs')}
-                    keyboardType="decimal-pad"
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                    placeholder="0"
-                    placeholderTextColor={Brand.textMuted}
-                    style={styles.bigNumberInput}
-                  />
-                </Pressable>
+                {/* Bottom Unit Box (Target) */}
+                {isKgOnTop ? renderLbsBox(false) : renderKgBox(false)}
 
                 {/* Quick Increment Steppers Grid (Clean 4-column balanced rows, 0 leak) */}
                 <View style={styles.stepperSection}>
                   <Text style={styles.stepperLabel}>
-                    QUICK ADJUST ({activeInput.toUpperCase()})
+                    QUICK ADJUST ({isKgOnTop ? 'KG' : 'LBS'})
                   </Text>
 
                   {/* Decrements Row */}
