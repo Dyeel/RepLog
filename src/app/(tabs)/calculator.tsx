@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
@@ -34,6 +36,22 @@ const COMMON_BENCHMARKS = [
 
 export default function CalculatorScreen() {
   const [activeMode, setActiveMode] = useState<CalcMode>('converter');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // 1. KG ⇄ LBS State
   const [kgVal, setKgVal] = useState('100');
@@ -101,14 +119,28 @@ export default function CalculatorScreen() {
             keyboardShouldPersistTaps="handled">
             {/* Screen Header */}
             <View style={styles.header}>
-              <Text style={styles.sectionTag}>FITNESS UTILITIES</Text>
-              <Text style={styles.headline}>Calculator</Text>
+              <View style={styles.headerTitleRow}>
+                <View>
+                  <Text style={styles.sectionTag}>FITNESS UTILITIES</Text>
+                  <Text style={styles.headline}>Calculator</Text>
+                </View>
+
+                {isKeyboardVisible && (
+                  <Pressable onPress={Keyboard.dismiss} style={styles.doneBtnHeader}>
+                    <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
+                    <Text style={styles.doneBtnHeaderText}>Done</Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
 
             {/* Mode Selector Tabs */}
             <View style={styles.tabBar}>
               <Pressable
-                onPress={() => setActiveMode('converter')}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setActiveMode('converter');
+                }}
                 style={[styles.tabBtn, activeMode === 'converter' && styles.tabBtnActive]}>
                 <MaterialCommunityIcons
                   name="swap-horizontal"
@@ -125,7 +157,10 @@ export default function CalculatorScreen() {
               </Pressable>
 
               <Pressable
-                onPress={() => setActiveMode('plates')}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setActiveMode('plates');
+                }}
                 style={[styles.tabBtn, activeMode === 'plates' && styles.tabBtnActive]}>
                 <MaterialCommunityIcons
                   name="weight"
@@ -139,7 +174,10 @@ export default function CalculatorScreen() {
               </Pressable>
 
               <Pressable
-                onPress={() => setActiveMode('one_rm')}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setActiveMode('one_rm');
+                }}
                 style={[styles.tabBtn, activeMode === 'one_rm' && styles.tabBtnActive]}>
                 <MaterialCommunityIcons
                   name="trophy-outline"
@@ -155,7 +193,7 @@ export default function CalculatorScreen() {
 
             {/* MODE 1: KG ⇄ LBS CONVERTER */}
             {activeMode === 'converter' && (
-              <View style={styles.card}>
+              <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
                 <View style={styles.cardHeader}>
                   <View style={styles.titleRow}>
                     <MaterialCommunityIcons name="swap-horizontal" size={20} color={Brand.emerald} />
@@ -172,6 +210,8 @@ export default function CalculatorScreen() {
                       value={kgVal}
                       onChangeText={handleKgChange}
                       keyboardType="decimal-pad"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
                       placeholder="0"
                       placeholderTextColor={Brand.textMuted}
                       style={styles.textInput}
@@ -210,6 +250,8 @@ export default function CalculatorScreen() {
                       value={lbsVal}
                       onChangeText={handleLbsChange}
                       keyboardType="decimal-pad"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
                       placeholder="0"
                       placeholderTextColor={Brand.textMuted}
                       style={styles.textInput}
@@ -240,12 +282,12 @@ export default function CalculatorScreen() {
                     ))}
                   </View>
                 </View>
-              </View>
+              </Animated.View>
             )}
 
             {/* MODE 2: BARBELL PLATES CALCULATOR */}
             {activeMode === 'plates' && (
-              <View style={styles.card}>
+              <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
                 <View style={styles.cardHeader}>
                   <View style={styles.titleRow}>
                     <MaterialCommunityIcons name="weight" size={20} color={Brand.emerald} />
@@ -293,6 +335,8 @@ export default function CalculatorScreen() {
                       value={plateWeightInput}
                       onChangeText={setPlateWeightInput}
                       keyboardType="decimal-pad"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
                       placeholder="0"
                       placeholderTextColor={Brand.textMuted}
                       style={styles.textInput}
@@ -376,12 +420,12 @@ export default function CalculatorScreen() {
                     </Text>
                   )}
                 </View>
-              </View>
+              </Animated.View>
             )}
 
             {/* MODE 3: 1RM ESTIMATOR */}
             {activeMode === 'one_rm' && (
-              <View style={styles.card}>
+              <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
                 <View style={styles.cardHeader}>
                   <View style={styles.titleRow}>
                     <MaterialCommunityIcons name="trophy-outline" size={20} color={Brand.emerald} />
@@ -424,6 +468,8 @@ export default function CalculatorScreen() {
                         value={oneRmWeight}
                         onChangeText={setOneRmWeight}
                         keyboardType="decimal-pad"
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
                         placeholder="0"
                         placeholderTextColor={Brand.textMuted}
                         style={styles.textInput}
@@ -439,6 +485,8 @@ export default function CalculatorScreen() {
                         value={oneRmReps}
                         onChangeText={setOneRmReps}
                         keyboardType="number-pad"
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
                         placeholder="1"
                         placeholderTextColor={Brand.textMuted}
                         style={styles.textInput}
@@ -497,9 +545,17 @@ export default function CalculatorScreen() {
                     </View>
                   </View>
                 </View>
-              </View>
+              </Animated.View>
             )}
           </ScrollView>
+
+          {/* Floating Dismiss Button */}
+          {isKeyboardVisible && (
+            <Pressable onPress={Keyboard.dismiss} style={styles.floatingDismissBtn}>
+              <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
+              <Text style={styles.floatingDismissText}>Done</Text>
+            </Pressable>
+          )}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -528,6 +584,25 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: 2,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  doneBtnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Brand.emerald,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 6,
+  },
+  doneBtnHeaderText: {
+    color: '#050507',
+    fontSize: 12,
+    fontWeight: '800',
   },
   sectionTag: {
     color: Brand.textSecondary,
@@ -893,6 +968,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
     marginTop: 2,
+  },
+  floatingDismissBtn: {
+    position: 'absolute',
+    bottom: BottomTabInset + 10,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Brand.emerald,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: 10,
+    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+  },
+  floatingDismissText: {
+    color: '#050507',
+    fontSize: 13,
+    fontWeight: '800',
   },
   pressed: {
     opacity: 0.8,

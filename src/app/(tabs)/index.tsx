@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VolumeChart } from '@/components/analytics/volume-chart';
-import { GradientButton } from '@/components/ui';
+import { GradientButton, PulsingDot } from '@/components/ui';
 import { RecentSessionCard, WeeklyScheduleStrip } from '@/components/schedule';
-import { Brand, BottomTabInset, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
+import { BottomTabInset, Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { formatHeaderDate, getTodayDayOfWeek } from '@/lib/utils';
 import { groupLogsIntoSessions } from '@/lib/workout-sessions';
@@ -79,7 +80,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header Row */}
-          <View style={styles.header}>
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
             <View>
               <Text style={styles.dateText}>{formatHeaderDate()}</Text>
               <Text style={styles.headline}>RepLog</Text>
@@ -97,33 +98,35 @@ export default function HomeScreen() {
                 {activeSession ? 'Resume Workout' : 'Start Workout'}
               </Text>
             </Pressable>
-          </View>
+          </Animated.View>
 
           {/* Active Workout in Progress Banner */}
           {activeSession && (
-            <Pressable
-              onPress={() => router.push('/log')}
-              style={({ pressed }) => [styles.activeSessionBanner, pressed && styles.pressed]}>
-              <View style={styles.activeBannerLeft}>
-                <View style={styles.activePulseDot} />
-                <View>
-                  <Text style={styles.activeBannerTitle}>WORKOUT IN PROGRESS</Text>
-                  <Text style={styles.activeBannerSubtitle}>
-                    {activeSession.title} · {activeSession.exercises.length}{' '}
-                    {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
-                  </Text>
+            <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+              <Pressable
+                onPress={() => router.push('/log')}
+                style={({ pressed }) => [styles.activeSessionBanner, pressed && styles.pressed]}>
+                <View style={styles.activeBannerLeft}>
+                  <PulsingDot size={8} color={Brand.emerald} />
+                  <View style={styles.activeTextCol}>
+                    <Text style={styles.activeBannerTitle}>WORKOUT IN PROGRESS</Text>
+                    <Text style={styles.activeBannerSubtitle}>
+                      {activeSession.title} · {activeSession.exercises.length}{' '}
+                      {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.activeBannerRight}>
-                <Text style={styles.activeTimerText}>{elapsedText}</Text>
-                <MaterialCommunityIcons name="chevron-right" size={20} color={Brand.emerald} />
-              </View>
-            </Pressable>
+                <View style={styles.activeBannerRight}>
+                  <Text style={styles.activeTimerText}>{elapsedText}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={Brand.emerald} />
+                </View>
+              </Pressable>
+            </Animated.View>
           )}
 
           {/* Today's Focus Card */}
-          <View style={styles.heroCard}>
+          <Animated.View entering={FadeInDown.delay(150).duration(450)} style={styles.heroCard}>
             <View style={styles.heroHeader}>
               <View style={styles.heroTagRow}>
                 <View
@@ -157,10 +160,10 @@ export default function HomeScreen() {
               onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
               compact
             />
-          </View>
+          </Animated.View>
 
           {/* Performance & Compliance Strip */}
-          <View style={styles.statsStrip}>
+          <Animated.View entering={FadeInDown.delay(200).duration(450)} style={styles.statsStrip}>
             {/* Metric 1: Weekly Goal */}
             <View style={styles.statCard}>
               <View style={styles.statIconBadge}>
@@ -194,16 +197,20 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.statTitle}>Vol ({unitPreference})</Text>
             </View>
-          </View>
+          </Animated.View>
 
           {/* 7-Day Volume Progression Bar Chart */}
-          <VolumeChart logs={logs} unit={unitPreference} />
+          <Animated.View entering={FadeInDown.delay(250).duration(450)}>
+            <VolumeChart logs={logs} unit={unitPreference} />
+          </Animated.View>
 
           {/* 7-Day Split Strip */}
-          <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
+          <Animated.View entering={FadeInDown.delay(300).duration(450)}>
+            <WeeklyScheduleStrip schedule={schedule} activeDay={today} />
+          </Animated.View>
 
           {/* Recent Workouts Section */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(350).duration(450)} style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionLabel}>RECENT WORKOUT SESSIONS</Text>
               {recentSessions.length > 0 && (
@@ -239,7 +246,7 @@ export default function HomeScreen() {
                 />
               ))
             )}
-          </View>
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -312,12 +319,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+    flex: 1,
   },
-  activePulseDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Brand.emerald,
+  activeTextCol: {
+    gap: 1,
+    flex: 1,
   },
   activeBannerTitle: {
     color: Brand.emerald,

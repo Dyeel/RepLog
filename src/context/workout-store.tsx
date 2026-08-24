@@ -62,7 +62,12 @@ type WorkoutStore = {
   }) => Promise<FullWorkoutSession>;
   saveActiveSession: (session: ActiveWorkoutSession | null) => Promise<void>;
   clearActiveSession: () => Promise<void>;
-  addBodyWeightLog: (weight: number | string, dateKey?: string, note?: string) => Promise<BodyWeightEntry>;
+  addBodyWeightLog: (
+    weight: number | string,
+    dateKey?: string,
+    note?: string,
+    unit?: WeightUnit,
+  ) => Promise<BodyWeightEntry>;
   deleteBodyWeightLog: (id: string) => Promise<void>;
   deleteLog: (logId: string) => Promise<void>;
   deleteSessionByDate: (dateKey: string) => Promise<void>;
@@ -226,12 +231,17 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, [data, persist]);
 
   const addBodyWeightLog = useCallback(
-    async (weight: number | string, dateKeyInput?: string, note?: string) => {
+    async (
+      weight: number | string,
+      dateKeyInput?: string,
+      note?: string,
+      explicitUnit?: WeightUnit,
+    ) => {
       const val = typeof weight === 'string' ? parseFloat(weight) : weight;
       const now = new Date();
       const iso = now.toISOString();
       const dateKey = dateKeyInput || toDateKey(iso);
-      const unit = data?.unitPreference ?? 'kg';
+      const unit = explicitUnit ?? data?.unitPreference ?? 'kg';
 
       const entry: BodyWeightEntry = {
         id: generateId(),

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +14,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -93,14 +95,21 @@ export default function LogWorkoutScreen() {
     }
   }, []);
 
-  // Update timer every second
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsElapsed(
-        Math.max(0, Math.floor((Date.now() - startTimestampRef.current) / 1000)),
-      );
-    }, 1000);
-    return () => clearInterval(interval);
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   // Sync active session state to store whenever exercises/title/unit change
@@ -359,7 +368,10 @@ export default function LogWorkoutScreen() {
               const previousPerf = getPreviousExercisePerformance(exercise.exerciseName, logs);
 
               return (
-                <View key={exercise.id} style={styles.exerciseCard}>
+                <Animated.View
+                  key={exercise.id}
+                  entering={FadeInDown.duration(300)}
+                  style={styles.exerciseCard}>
                   {/* Exercise Header with Thumbnail Picture */}
                   <View style={styles.exerciseCardHeader}>
                     <View style={styles.exerciseHeaderLeft}>
@@ -447,7 +459,7 @@ export default function LogWorkoutScreen() {
                     <MaterialCommunityIcons name="plus" size={16} color={Brand.textPrimary} />
                     <Text style={styles.addSetText}>Add Set</Text>
                   </Pressable>
-                </View>
+                </Animated.View>
               );
             })}
 
@@ -495,6 +507,14 @@ export default function LogWorkoutScreen() {
           visible={isConverterVisible}
           onClose={() => setIsConverterVisible(false)}
         />
+
+        {/* Floating Keyboard Dismiss Bar */}
+        {isKeyboardVisible && (
+          <Pressable onPress={Keyboard.dismiss} style={styles.floatingDismissBtn}>
+            <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
+            <Text style={styles.floatingDismissText}>Hide Keyboard</Text>
+          </Pressable>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -665,6 +685,28 @@ const styles = StyleSheet.create({
   footer: {
     paddingTop: Spacing.two,
     paddingBottom: Spacing.six,
+  },
+  floatingDismissBtn: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Brand.emerald,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: 10,
+    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+  },
+  floatingDismissText: {
+    color: '#050507',
+    fontSize: 13,
+    fontWeight: '800',
   },
   pressed: {
     opacity: 0.8,

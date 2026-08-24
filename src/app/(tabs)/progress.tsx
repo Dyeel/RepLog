@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -56,7 +57,7 @@ export default function ProgressScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
-          <View style={styles.header}>
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
             <View>
               <Text style={styles.sectionTag}>BODY & STRENGTH OVERLOAD</Text>
               <Text style={styles.headline}>Progress</Text>
@@ -68,20 +69,24 @@ export default function ProgressScreen() {
               <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
               <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
             </Pressable>
-          </View>
+          </Animated.View>
 
           {/* 1. Interactive Bodyweight SVG Progression Curve */}
-          <BodyweightChart
-            logs={bodyWeightLogs}
-            unit={unitPreference}
-            onOpenLogModal={() => setIsLogWeightVisible(true)}
-          />
+          <Animated.View entering={FadeInDown.delay(100).duration(450)}>
+            <BodyweightChart
+              logs={bodyWeightLogs}
+              unit={unitPreference}
+              onOpenLogModal={() => setIsLogWeightVisible(true)}
+            />
+          </Animated.View>
 
           {/* 2. Exercise Lift Strength 1RM Progression Curve */}
-          <StrengthProgressionChart logs={logs} unit={unitPreference} />
+          <Animated.View entering={FadeInDown.delay(200).duration(450)}>
+            <StrengthProgressionChart logs={logs} unit={unitPreference} />
+          </Animated.View>
 
           {/* 3. Scale Weigh-in History */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(300).duration(450)} style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>SCALE WEIGH-IN HISTORY</Text>
               <Text style={styles.historyCount}>{bodyWeightLogs.length} entries</Text>
@@ -120,7 +125,7 @@ export default function ProgressScreen() {
                 ))}
               </View>
             )}
-          </View>
+          </Animated.View>
         </ScrollView>
 
         {/* Log Weight Modal Sheet */}

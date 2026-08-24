@@ -1,6 +1,18 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
 import { convertWeight } from '@/lib/utils';
@@ -53,57 +65,65 @@ export function UnitConverterModal({ visible, onClose }: UnitConverterModalProps
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalCard}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
-              <MaterialCommunityIcons name="swap-horizontal" size={22} color={Brand.emerald} />
-              <Text style={styles.title}>KG ⇄ LBS CALCULATOR</Text>
-            </View>
-            <Pressable onPress={onClose} style={styles.closeBtn}>
-              <MaterialCommunityIcons name="close" size={20} color={Brand.textMuted} />
-            </Pressable>
-          </View>
-
-          {/* Dual Live Converter Inputs */}
-          <View style={styles.converterSection}>
-            {/* KG Field */}
-            <View style={styles.inputCol}>
-              <Text style={styles.inputLabel}>KILOGRAMS (KG)</Text>
-              <View style={styles.inputBox}>
-                <TextInput
-                  value={kgVal}
-                  onChangeText={handleKgChange}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={Brand.textMuted}
-                  style={styles.textInput}
-                />
-                <Text style={styles.unitTag}>KG</Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={styles.overlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.avoidingContainer}>
+            <View style={styles.modalCard}>
+              {/* Header */}
+              <View style={styles.header}>
+                <View style={styles.titleRow}>
+                  <MaterialCommunityIcons name="swap-horizontal" size={22} color={Brand.emerald} />
+                  <Text style={styles.title}>KG ⇄ LBS CALCULATOR</Text>
+                </View>
+                <Pressable onPress={onClose} style={styles.closeBtn}>
+                  <MaterialCommunityIcons name="close" size={20} color={Brand.textMuted} />
+                </Pressable>
               </View>
-            </View>
 
-            <View style={styles.equalCircle}>
-              <MaterialCommunityIcons name="equal" size={18} color={Brand.emerald} />
-            </View>
+              {/* Dual Live Converter Inputs */}
+              <View style={styles.converterSection}>
+                {/* KG Field */}
+                <View style={styles.inputCol}>
+                  <Text style={styles.inputLabel}>KILOGRAMS (KG)</Text>
+                  <View style={styles.inputBox}>
+                    <TextInput
+                      value={kgVal}
+                      onChangeText={handleKgChange}
+                      keyboardType="decimal-pad"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                      placeholder="0"
+                      placeholderTextColor={Brand.textMuted}
+                      style={styles.textInput}
+                    />
+                    <Text style={styles.unitTag}>KG</Text>
+                  </View>
+                </View>
 
-            {/* LBS Field */}
-            <View style={styles.inputCol}>
-              <Text style={styles.inputLabel}>POUNDS (LBS)</Text>
-              <View style={styles.inputBox}>
-                <TextInput
-                  value={lbsVal}
-                  onChangeText={handleLbsChange}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={Brand.textMuted}
-                  style={styles.textInput}
-                />
-                <Text style={styles.unitTag}>LBS</Text>
+                <View style={styles.equalCircle}>
+                  <MaterialCommunityIcons name="equal" size={18} color={Brand.emerald} />
+                </View>
+
+                {/* LBS Field */}
+                <View style={styles.inputCol}>
+                  <Text style={styles.inputLabel}>POUNDS (LBS)</Text>
+                  <View style={styles.inputBox}>
+                    <TextInput
+                      value={lbsVal}
+                      onChangeText={handleLbsChange}
+                      keyboardType="decimal-pad"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                      placeholder="0"
+                      placeholderTextColor={Brand.textMuted}
+                      style={styles.textInput}
+                    />
+                    <Text style={styles.unitTag}>LBS</Text>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
 
           {/* Reference Table / Common Barbell Benchmarks */}
           <View style={styles.benchmarksHeader}>
@@ -133,8 +153,10 @@ export function UnitConverterModal({ visible, onClose }: UnitConverterModalProps
             <Text style={styles.doneBtnText}>Done</Text>
           </Pressable>
         </View>
-      </View>
-    </Modal>
+      </KeyboardAvoidingView>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
   );
 }
 
@@ -145,6 +167,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.four,
+  },
+  avoidingContainer: {
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '85%',
   },
   modalCard: {
     backgroundColor: Brand.card,

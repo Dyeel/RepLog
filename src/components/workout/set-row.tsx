@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
 import { calculate1RM } from '@/lib/utils';
@@ -86,6 +86,8 @@ export function SetRow({
               placeholder="0"
               placeholderTextColor={Brand.textMuted}
               keyboardType="decimal-pad"
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
               style={styles.textInput}
             />
             {onOpenPlateCalculator && set.weight && parseFloat(set.weight) > 0 ? (
@@ -108,6 +110,8 @@ export function SetRow({
               placeholder="0"
               placeholderTextColor={Brand.textMuted}
               keyboardType="number-pad"
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
               style={styles.textInput}
             />
           </View>
