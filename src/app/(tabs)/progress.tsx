@@ -18,7 +18,7 @@ import {
   LogWeightModal,
   StrengthProgressionChart,
 } from '@/components/analytics';
-import { AnimatedTabScreen } from '@/components/ui';
+import { AnimatedTabScreen, ThemeCustomizerModal } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { formatDateTime } from '@/lib/utils';
@@ -28,6 +28,7 @@ export default function ProgressScreen() {
     useWorkoutStore();
 
   const [isLogWeightVisible, setIsLogWeightVisible] = useState(false);
+  const [isThemeModalVisible, setIsThemeModalVisible] = useState(false);
 
   if (!isReady) {
     return (
@@ -65,12 +66,20 @@ export default function ProgressScreen() {
                 <Text style={styles.headline}>Progress</Text>
               </View>
 
-              <Pressable
-                onPress={() => setIsLogWeightVisible(true)}
-                style={({ pressed }) => [styles.addLogBtn, pressed && styles.pressed]}>
-                <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
-                <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
-              </Pressable>
+              <View style={styles.headerRightActions}>
+                <Pressable
+                  onPress={() => setIsThemeModalVisible(true)}
+                  style={({ pressed }) => [styles.themeBtnHeader, pressed && styles.pressed]}>
+                  <MaterialCommunityIcons name="palette-outline" size={18} color={Brand.emerald} />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setIsLogWeightVisible(true)}
+                  style={({ pressed }) => [styles.addLogBtn, pressed && styles.pressed]}>
+                  <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
+                  <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
+                </Pressable>
+              </View>
             </View>
 
             {/* 1. Interactive Bodyweight SVG Progression Curve */}
@@ -133,6 +142,12 @@ export default function ProgressScreen() {
           unit={unitPreference}
           onClose={() => setIsLogWeightVisible(false)}
         />
+
+        {/* Theme Customizer Modal Studio */}
+        <ThemeCustomizerModal
+          visible={isThemeModalVisible}
+          onClose={() => setIsThemeModalVisible(false)}
+        />
       </SafeAreaView>
     </View>
   );
@@ -162,6 +177,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  themeBtnHeader: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Brand.cardElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
   },
   sectionTag: {
     color: Brand.textSecondary,
