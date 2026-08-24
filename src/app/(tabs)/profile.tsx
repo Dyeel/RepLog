@@ -25,7 +25,7 @@ import { BottomTabInset, Brand, Radius, Spacing, THEME_PALETTES } from '@/consta
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime } from '@/lib/utils';
-import { ThemeId, WeightUnit, WorkoutFrequency } from '@/types';
+import { WeightUnit, WorkoutFrequency } from '@/types';
 
 const FREQUENCIES: WorkoutFrequency[] = [2, 3, 4, 5, 6];
 const THEMES_LIST = Object.values(THEME_PALETTES);
@@ -83,64 +83,183 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.safeArea}>
         <AnimatedTabScreen>
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-            {/* 1. Athlete Profile Card */}
-            <View style={styles.profileHeroCard}>
+            {/* 1. Athlete Profile Hero Section */}
+            <View style={[styles.profileHeroCard, { borderColor: `${theme.accent}30` }]}>
+              {/* Top Banner Row */}
               <View style={styles.profileHeaderRow}>
-                <View style={[styles.avatarCircle, { borderColor: theme.accent, backgroundColor: `${theme.accent}15` }]}>
-                  <MaterialCommunityIcons name="arm-flex" size={28} color={theme.accent} />
+                <View
+                  style={[
+                    styles.avatarGlowContainer,
+                    {
+                      borderColor: theme.accent,
+                      backgroundColor: `${theme.accent}12`,
+                      shadowColor: theme.accent,
+                    },
+                  ]}>
+                  <MaterialCommunityIcons name="shield-account" size={32} color={theme.accent} />
                 </View>
 
-                <View style={styles.profileTitleCol}>
-                  <View style={styles.athleteBadgeRow}>
+                <View style={styles.profileInfoCol}>
+                  <View style={styles.nameRow}>
                     <Text style={styles.athleteName}>Athlete Profile</Text>
-                    <View style={[styles.proBadge, { backgroundColor: `${theme.accent}20`, borderColor: theme.accent }]}>
-                      <Text style={[styles.proBadgeText, { color: theme.accent }]}>ACTIVE</Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        { backgroundColor: `${theme.accent}20`, borderColor: theme.accent },
+                      ]}>
+                      <View style={[styles.statusDot, { backgroundColor: theme.accent }]} />
+                      <Text style={[styles.statusBadgeText, { color: theme.accent }]}>PRO LIFTER</Text>
                     </View>
                   </View>
-                  <Text style={styles.athleteSub}>Progress Tracking & App Settings</Text>
+                  <Text style={styles.athleteSub}>Consistency & Progressive Overload</Text>
                 </View>
               </View>
 
-              {/* Lifetime Stats Strip */}
-              <View style={styles.statsStrip}>
-                <View style={styles.statBox}>
-                  <Text style={[styles.statValue, { color: theme.accent }]}>{totalSessionsCount}</Text>
-                  <Text style={styles.statLabel}>Workouts</Text>
+              {/* High-Contrast Lifetime Performance Matrix (4-Grid) */}
+              <View style={styles.matrixContainer}>
+                <View style={styles.matrixRow}>
+                  <View style={styles.matrixCard}>
+                    <View style={styles.matrixCardHeader}>
+                      <MaterialCommunityIcons name="dumbbell" size={14} color={theme.accent} />
+                      <Text style={styles.matrixLabel}>WORKOUTS</Text>
+                    </View>
+                    <Text style={[styles.matrixValue, { color: theme.accent }]}>
+                      {totalSessionsCount}
+                    </Text>
+                  </View>
+
+                  <View style={styles.matrixCard}>
+                    <View style={styles.matrixCardHeader}>
+                      <MaterialCommunityIcons name="repeat" size={14} color={Brand.textSecondary} />
+                      <Text style={styles.matrixLabel}>TOTAL SETS</Text>
+                    </View>
+                    <Text style={styles.matrixValue}>{stats.totalSets}</Text>
+                  </View>
                 </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statBox}>
-                  <Text style={styles.statValue}>{stats.totalSets}</Text>
-                  <Text style={styles.statLabel}>Total Sets</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statBox}>
-                  <Text style={styles.statValue}>
-                    {stats.totalVolume > 9999
-                      ? `${(stats.totalVolume / 1000).toFixed(1)}k`
-                      : stats.totalVolume.toLocaleString()}
-                  </Text>
-                  <Text style={styles.statLabel}>Volume ({unitPreference})</Text>
+
+                <View style={styles.matrixRow}>
+                  <View style={styles.matrixCard}>
+                    <View style={styles.matrixCardHeader}>
+                      <MaterialCommunityIcons name="chart-bell-curve-cumulative" size={14} color={Brand.textSecondary} />
+                      <Text style={styles.matrixLabel}>VOLUME ({unitPreference.toUpperCase()})</Text>
+                    </View>
+                    <Text style={styles.matrixValue}>
+                      {stats.totalVolume > 9999
+                        ? `${(stats.totalVolume / 1000).toFixed(1)}k`
+                        : stats.totalVolume.toLocaleString()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.matrixCard}>
+                    <View style={styles.matrixCardHeader}>
+                      <MaterialCommunityIcons name="calendar-check" size={14} color={theme.accent} />
+                      <Text style={styles.matrixLabel}>SPLIT TARGET</Text>
+                    </View>
+                    <Text style={[styles.matrixValue, { color: theme.accent }]}>
+                      {frequency}D / wk
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
 
-            {/* 2. Theme & Visual Style Studio */}
+            {/* 2. Progression Section (Placed DIRECTLY below Profile) */}
+            <View style={styles.progressionSectionWrapper}>
+              <View style={styles.progressHeaderRow}>
+                <View>
+                  <Text style={styles.sectionTag}>BODY & OVERLOAD ANALYTICS</Text>
+                  <Text style={styles.headline}>Progression</Text>
+                </View>
+
+                <Pressable
+                  onPress={() => setIsLogWeightVisible(true)}
+                  style={({ pressed }) => [
+                    styles.addLogBtn,
+                    { backgroundColor: theme.accent },
+                    pressed && styles.pressed,
+                  ]}>
+                  <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
+                  <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
+                </Pressable>
+              </View>
+
+              {/* 2.1 Bodyweight Trend SVG Curve Graph */}
+              <BodyweightChart
+                logs={bodyWeightLogs}
+                unit={unitPreference}
+                onOpenLogModal={() => setIsLogWeightVisible(true)}
+              />
+
+              {/* 2.2 Lift Strength 1RM Progressive Overload Curve */}
+              <StrengthProgressionChart logs={logs} unit={unitPreference} />
+
+              {/* 2.3 Scale Weigh-in Log Table */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <View style={styles.sectionTitleRow}>
+                    <MaterialCommunityIcons name="history" size={16} color={theme.accent} />
+                    <Text style={styles.sectionCardTitle}>SCALE WEIGH-IN HISTORY</Text>
+                  </View>
+                  <Text style={styles.historyCount}>{bodyWeightLogs.length} entries</Text>
+                </View>
+
+                {bodyWeightLogs.length === 0 ? (
+                  <View style={styles.emptyHistory}>
+                    <Text style={styles.emptyHistoryText}>No weigh-in logs recorded yet.</Text>
+                    <Text style={styles.emptyHistorySub}>
+                      Tap &quot;Log Weigh-In&quot; above to begin charting your bodyweight curve.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.historyList}>
+                    {bodyWeightLogs.slice(0, 10).map((entry) => (
+                      <View key={entry.id} style={styles.historyRow}>
+                        <View style={styles.historyLeft}>
+                          <View style={styles.weightNumberRow}>
+                            <Text style={styles.historyWeight}>{entry.weight}</Text>
+                            <Text style={[styles.historyUnit, { color: theme.accent }]}>
+                              {entry.unit}
+                            </Text>
+                          </View>
+                          <Text style={styles.historyDate}>{formatDateTime(entry.timestamp)}</Text>
+                          {entry.note ? <Text style={styles.historyNote}>{entry.note}</Text> : null}
+                        </View>
+
+                        <Pressable
+                          onPress={() => handleDeleteEntry(entry.id, entry.weight)}
+                          style={styles.deleteBtn}>
+                          <MaterialCommunityIcons
+                            name="trash-can-outline"
+                            size={16}
+                            color={Brand.danger}
+                          />
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* 3. Theme & Visual Style Studio Section */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionCardHeader}>
                 <View style={styles.sectionTitleRow}>
                   <MaterialCommunityIcons name="palette-outline" size={18} color={theme.accent} />
-                  <Text style={styles.sectionCardTitle}>THEME & APPEARANCE</Text>
+                  <Text style={styles.sectionCardTitle}>THEME STUDIO</Text>
                 </View>
-                <Pressable onPress={() => setIsThemeModalVisible(true)}>
-                  <Text style={[styles.seeAllText, { color: theme.accent }]}>More Themes</Text>
+                <Pressable
+                  onPress={() => setIsThemeModalVisible(true)}
+                  style={({ pressed }) => [styles.openStudioPill, pressed && styles.pressed]}>
+                  <Text style={[styles.seeAllText, { color: theme.accent }]}>Studio Modal ↗</Text>
                 </Pressable>
               </View>
 
               <Text style={styles.sectionHelper}>
-                Select an accent color palette to customize your RepLog experience.
+                Select an accent color palette to customize all screens, curves, and active buttons.
               </Text>
 
-              {/* Quick Horizontal Theme Swatch Grid */}
+              {/* Luxury Theme Palette Grid */}
               <View style={styles.themesGrid}>
                 {THEMES_LIST.map((item) => {
                   const isSelected = themeId === item.id;
@@ -149,29 +268,37 @@ export default function ProfileScreen() {
                       key={item.id}
                       onPress={() => setThemeId(item.id)}
                       style={({ pressed }) => [
-                        styles.themePill,
+                        styles.themeCardItem,
                         { borderColor: isSelected ? item.accent : Brand.cardBorder },
-                        isSelected && { backgroundColor: `${item.accent}15` },
+                        isSelected && {
+                          backgroundColor: `${item.accent}14`,
+                          borderColor: item.accent,
+                        },
                         pressed && styles.pressed,
                       ]}>
-                      <View style={[styles.themeDot, { backgroundColor: item.accent }]} />
-                      <Text
-                        style={[
-                          styles.themePillName,
-                          isSelected && { color: item.accent, fontWeight: '800' },
-                        ]}>
-                        {item.name.split(' ')[1] || item.name}
-                      </Text>
-                      {isSelected && (
-                        <MaterialCommunityIcons name="check" size={13} color={item.accent} />
-                      )}
+                      <View style={[styles.themeDotBig, { backgroundColor: item.accent }]} />
+                      <View style={styles.themeNameCol}>
+                        <Text
+                          style={[
+                            styles.themePillName,
+                            isSelected && { color: item.accent, fontWeight: '800' },
+                          ]}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.themeSubText}>{item.subtitle.split('·')[1]?.trim() || item.subtitle}</Text>
+                      </View>
+                      {isSelected ? (
+                        <View style={[styles.checkCircle, { backgroundColor: item.accent }]}>
+                          <MaterialCommunityIcons name="check" size={12} color="#050507" />
+                        </View>
+                      ) : null}
                     </Pressable>
                   );
                 })}
               </View>
             </View>
 
-            {/* 3. Training Preferences (Units & Target) */}
+            {/* 4. Training Preferences & App Settings */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionCardHeader}>
                 <View style={styles.sectionTitleRow}>
@@ -180,11 +307,11 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              {/* Unit Switcher */}
+              {/* Unit Preference Switcher */}
               <View style={styles.prefRow}>
                 <View style={styles.prefLeft}>
                   <Text style={styles.prefTitle}>Weight Unit</Text>
-                  <Text style={styles.prefSubtitle}>Used for logging & 1RM max calculations</Text>
+                  <Text style={styles.prefSubtitle}>Used for logging, conversion & calculations</Text>
                 </View>
                 <View style={styles.unitToggleRow}>
                   {(['kg', 'lbs'] as WeightUnit[]).map((u) => {
@@ -195,7 +322,10 @@ export default function ProfileScreen() {
                         onPress={() => setUnitPreference(u)}
                         style={({ pressed }) => [
                           styles.unitChoiceBtn,
-                          isSelected && [styles.unitChoiceBtnSelected, { backgroundColor: theme.accent }],
+                          isSelected && [
+                            styles.unitChoiceBtnSelected,
+                            { backgroundColor: theme.accent },
+                          ],
                           pressed && styles.pressed,
                         ]}>
                         <Text
@@ -211,7 +341,7 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              {/* Frequency Selector */}
+              {/* Target Workout Frequency */}
               <View style={styles.prefRow}>
                 <View style={styles.prefLeft}>
                   <Text style={styles.prefTitle}>Weekly Target Days</Text>
@@ -226,7 +356,10 @@ export default function ProfileScreen() {
                         onPress={() => setFrequency(f)}
                         style={({ pressed }) => [
                           styles.freqBtn,
-                          isSelected && [styles.freqBtnSelected, { backgroundColor: theme.accent, borderColor: theme.accent }],
+                          isSelected && [
+                            styles.freqBtnSelected,
+                            { backgroundColor: theme.accent, borderColor: theme.accent },
+                          ],
                           pressed && styles.pressed,
                         ]}>
                         <Text
@@ -241,73 +374,12 @@ export default function ProfileScreen() {
                   })}
                 </View>
               </View>
-            </View>
 
-            {/* 4. Body & Strength Progression Section */}
-            <View style={styles.progressHeaderRow}>
-              <View>
-                <Text style={styles.sectionTag}>BODY & OVERLOAD ANALYTICS</Text>
-                <Text style={styles.headline}>Progression</Text>
+              {/* App Version Info Footer */}
+              <View style={styles.appInfoFooter}>
+                <Text style={styles.appInfoText}>RepLog Pro · v1.0.0</Text>
+                <Text style={styles.appInfoSub}>Clean, offline-first bodybuilding workout log</Text>
               </View>
-
-              <Pressable
-                onPress={() => setIsLogWeightVisible(true)}
-                style={({ pressed }) => [styles.addLogBtn, { backgroundColor: theme.accent }, pressed && styles.pressed]}>
-                <MaterialCommunityIcons name="scale-bathroom" size={16} color="#050507" />
-                <Text style={styles.addLogBtnText}>Log Weigh-In</Text>
-              </Pressable>
-            </View>
-
-            {/* Bodyweight Trend SVG Chart */}
-            <BodyweightChart
-              logs={bodyWeightLogs}
-              unit={unitPreference}
-              onOpenLogModal={() => setIsLogWeightVisible(true)}
-            />
-
-            {/* Strength Progression Curve Chart */}
-            <StrengthProgressionChart logs={logs} unit={unitPreference} />
-
-            {/* Scale Weigh-in History Log */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionCardHeader}>
-                <Text style={styles.sectionCardTitle}>SCALE WEIGH-IN HISTORY</Text>
-                <Text style={styles.historyCount}>{bodyWeightLogs.length} entries</Text>
-              </View>
-
-              {bodyWeightLogs.length === 0 ? (
-                <View style={styles.emptyHistory}>
-                  <Text style={styles.emptyHistoryText}>No weigh-in logs recorded yet.</Text>
-                  <Text style={styles.emptyHistorySub}>
-                    Tap &quot;Log Weigh-In&quot; above to begin tracking your weight trend.
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.historyList}>
-                  {bodyWeightLogs.slice(0, 10).map((entry) => (
-                    <View key={entry.id} style={styles.historyRow}>
-                      <View style={styles.historyLeft}>
-                        <View style={styles.weightNumberRow}>
-                          <Text style={styles.historyWeight}>{entry.weight}</Text>
-                          <Text style={styles.historyUnit}>{entry.unit}</Text>
-                        </View>
-                        <Text style={styles.historyDate}>{formatDateTime(entry.timestamp)}</Text>
-                        {entry.note ? <Text style={styles.historyNote}>{entry.note}</Text> : null}
-                      </View>
-
-                      <Pressable
-                        onPress={() => handleDeleteEntry(entry.id, entry.weight)}
-                        style={styles.deleteBtn}>
-                        <MaterialCommunityIcons
-                          name="trash-can-outline"
-                          size={16}
-                          color={Brand.danger}
-                        />
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-              )}
             </View>
           </ScrollView>
         </AnimatedTabScreen>
@@ -353,7 +425,7 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.card,
     borderRadius: Radius.xl,
     padding: Spacing.four,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Brand.cardBorder,
     gap: Spacing.four,
   },
@@ -362,35 +434,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
-  avatarCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  avatarGlowContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  profileTitleCol: {
+  profileInfoCol: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
-  athleteBadgeRow: {
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    justifyContent: 'space-between',
   },
   athleteName: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  proBadge: {
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     borderRadius: Radius.pill,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderWidth: 1,
   },
-  proBadgeText: {
+  statusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  statusBadgeText: {
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -398,38 +483,74 @@ const styles = StyleSheet.create({
   athleteSub: {
     color: Brand.textSecondary,
     fontSize: 12,
+    fontWeight: '500',
   },
-  statsStrip: {
+  matrixContainer: {
+    gap: Spacing.two,
+  },
+  matrixRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  matrixCard: {
+    flex: 1,
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
+    gap: 4,
   },
-  statBox: {
-    flex: 1,
+  matrixCardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 5,
   },
-  statValue: {
+  matrixLabel: {
+    color: Brand.textMuted,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  matrixValue: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
-  statLabel: {
-    color: Brand.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
+  progressionSectionWrapper: {
+    gap: Spacing.four,
   },
-  statDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  progressHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingTop: Spacing.one,
+  },
+  sectionTag: {
+    color: Brand.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  headline: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  addLogBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 8,
+  },
+  addLogBtnText: {
+    color: '#050507',
+    fontSize: 12,
+    fontWeight: '800',
   },
   sectionCard: {
     backgroundColor: Brand.card,
@@ -455,38 +576,60 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.8,
   },
+  openStudioPill: {
+    backgroundColor: Brand.cardElevated,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.xs,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
+  },
   seeAllText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   sectionHelper: {
     color: Brand.textSecondary,
     fontSize: 12,
+    lineHeight: 16,
   },
   themesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
-  themePill: {
+  themeCardItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.three,
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 10,
     borderWidth: 1.5,
   },
-  themeDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  themeDotBig: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  themeNameCol: {
+    flex: 1,
+    gap: 1,
   },
   themePillName: {
-    color: Brand.textSecondary,
-    fontSize: 12,
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '700',
+  },
+  themeSubText: {
+    color: Brand.textMuted,
+    fontSize: 11,
+  },
+  checkCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   prefRow: {
     gap: Spacing.two,
@@ -555,37 +698,6 @@ const styles = StyleSheet.create({
   },
   freqBtnTextSelected: {
     color: '#050507',
-    fontWeight: '800',
-  },
-  progressHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    paddingTop: Spacing.two,
-  },
-  sectionTag: {
-    color: Brand.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  headline: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  addLogBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 8,
-  },
-  addLogBtnText: {
-    color: '#050507',
-    fontSize: 12,
     fontWeight: '800',
   },
   emptyHistory: {
@@ -660,6 +772,22 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     padding: Spacing.two,
+  },
+  appInfoFooter: {
+    alignItems: 'center',
+    paddingTop: Spacing.three,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.04)',
+    gap: 2,
+  },
+  appInfoText: {
+    color: Brand.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  appInfoSub: {
+    color: Brand.textMuted,
+    fontSize: 10,
   },
   pressed: {
     opacity: 0.8,
