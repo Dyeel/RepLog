@@ -25,7 +25,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "pwa": {
+        "name": "RepLog",
+        "shortName": "RepLog",
+        "display": "standalone",
+        "backgroundColor": "#07080B",
+        "themeColor": "#07080B"
+      }
     },
     "plugins": [
       "expo-router",
