@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   button: {
-    minHeight: 56,
-    borderRadius: Radius.lg,
+    minHeight: 54,
+    borderRadius: Radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -73,13 +73,13 @@ const styles = StyleSheet.create({
   },
   primaryGlow: {
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
+    shadowOpacity: 0.38,
+    shadowRadius: 14,
     elevation: 8,
   },
   buttonCompact: {
-    minHeight: 50,
-    borderRadius: Radius.md,
+    minHeight: 48,
+    borderRadius: Radius.pill,
   },
   label: {
     fontSize: 17,

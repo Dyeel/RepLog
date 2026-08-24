@@ -13,9 +13,11 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Animated, {
+  cancelAnimation,
+  Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -38,9 +40,6 @@ const BARBELL_BENCHMARKS: BenchmarkCard[] = [
   { tag: '2 Plates', lbs: '225', kg: '102.1', sub: '2 × 45 lb / 20 kg' },
   { tag: '2 Plates + 25', lbs: '275', kg: '124.7', sub: '+25 lb / 11.3 kg' },
   { tag: '3 Plates', lbs: '315', kg: '142.9', sub: '3 × 45 lb / 20 kg' },
-  { tag: '3 Plates + 25', lbs: '365', kg: '165.6', sub: '+25 lb / 11.3 kg' },
-  { tag: '4 Plates', lbs: '405', kg: '183.7', sub: '4 × 45 lb / 20 kg' },
-  { tag: '5 Plates', lbs: '495', kg: '224.5', sub: '5 × 45 lb / 20 kg' },
 ];
 
 const DUMBBELL_PRESETS = [
@@ -55,7 +54,7 @@ const DUMBBELL_PRESETS = [
 ];
 
 const NEGATIVE_DELTAS = [-10, -5, -2.5, -1];
-const POSITIVE_DELTAS = [+1, +2.5, +5, +10];
+const POSITIVE_DELTAS = [1, 2.5, 5, 10];
 
 export default function CalculatorScreen() {
   const theme = useTheme();
@@ -67,7 +66,7 @@ export default function CalculatorScreen() {
   const [topUnit, setTopUnit] = useState<'kg' | 'lbs'>('kg');
   const [activeInput, setActiveInput] = useState<'kg' | 'lbs'>('kg');
 
-  // Animated Swap Rotation
+  // Animated Swap Rotation strictly locked between 0 and 180 degrees
   const swapRotation = useSharedValue(0);
 
   const swapAnimatedStyle = useAnimatedStyle(() => ({
@@ -109,18 +108,18 @@ export default function CalculatorScreen() {
     }
   };
 
-  // Middle switch button: ONLY this swaps the top and bottom positions!
+  // Middle switch button: Always lands exactly 100% straight at 0 or 180 deg
   const handleMiddleSwitchPress = () => {
-    // 1. Rotate the swap badge 180 degrees
-    swapRotation.value = withSpring(swapRotation.value + 180, {
-      damping: 14,
-      stiffness: 160,
-    });
-
-    // 2. Swap top and bottom unit layout
     const nextTop = topUnit === 'kg' ? 'lbs' : 'kg';
     setTopUnit(nextTop);
     setActiveInput(nextTop);
+
+    // Cancel any in-flight oscillation and smoothly lock to exact target angle
+    cancelAnimation(swapRotation);
+    swapRotation.value = withTiming(nextTop === 'lbs' ? 180 : 0, {
+      duration: 260,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+    });
   };
 
   const adjustWeight = (delta: number) => {
@@ -158,7 +157,7 @@ export default function CalculatorScreen() {
         styles.unitInputBox,
         activeInput === 'kg' && [
           styles.unitInputBoxActive,
-          { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
+          { borderColor: theme.accent, backgroundColor: `${theme.accent}0d` },
         ],
       ]}>
       <View style={styles.unitInputHeader}>
@@ -166,7 +165,7 @@ export default function CalculatorScreen() {
           style={[
             styles.unitPill,
             activeInput === 'kg'
-              ? { backgroundColor: `${theme.accent}20` }
+              ? { backgroundColor: `${theme.accent}22` }
               : styles.unitPillSecondary,
           ]}>
           <Text
@@ -210,7 +209,7 @@ export default function CalculatorScreen() {
         styles.unitInputBox,
         activeInput === 'lbs' && [
           styles.unitInputBoxActive,
-          { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
+          { borderColor: theme.accent, backgroundColor: `${theme.accent}0d` },
         ],
       ]}>
       <View style={styles.unitInputHeader}>
@@ -218,7 +217,7 @@ export default function CalculatorScreen() {
           style={[
             styles.unitPill,
             activeInput === 'lbs'
-              ? { backgroundColor: `${theme.accent}20` }
+              ? { backgroundColor: `${theme.accent}22` }
               : styles.unitPillSecondary,
           ]}>
           <Text
@@ -293,32 +292,35 @@ export default function CalculatorScreen() {
                 </View>
               </View>
 
-              {/* Primary Interactive Dual Converter Hero Card */}
+              {/* Primary Sculpted Stadium Dual Converter Hero Card */}
               <View style={styles.converterHeroCard}>
-                {/* Top Box (Swapped only via the middle button) */}
+                {/* Top Box */}
                 {topUnit === 'kg' ? renderKgBox() : renderLbsBox()}
 
-                {/* Middle Switch Button Divider (Swaps top & bottom on tap) */}
+                {/* Floating Orbital Switch Button (Always Straight) */}
                 <View style={styles.swapDividerRow}>
                   <View style={styles.swapLine} />
                   <Pressable
                     onPress={handleMiddleSwitchPress}
                     style={({ pressed }) => [
                       styles.swapBadgeBtn,
-                      { borderColor: `${theme.accent}50` },
+                      {
+                        borderColor: `${theme.accent}60`,
+                        shadowColor: theme.accent,
+                      },
                       pressed && styles.pressed,
                     ]}>
                     <Animated.View style={swapAnimatedStyle}>
-                      <MaterialCommunityIcons name="swap-vertical" size={20} color={theme.accent} />
+                      <MaterialCommunityIcons name="swap-vertical" size={22} color={theme.accent} />
                     </Animated.View>
                   </Pressable>
                   <View style={styles.swapLine} />
                 </View>
 
-                {/* Bottom Box (Swapped only via the middle button) */}
+                {/* Bottom Box */}
                 {topUnit === 'kg' ? renderLbsBox() : renderKgBox()}
 
-                {/* Quick Increment Steppers Grid (Clean 4-column balanced rows, 0 leak) */}
+                {/* Ergonomic Quick Increment Stadium Pills */}
                 <View style={styles.stepperSection}>
                   <Text style={styles.stepperLabel}>
                     QUICK ADJUST ({activeInput.toUpperCase()})
@@ -331,11 +333,11 @@ export default function CalculatorScreen() {
                         key={delta}
                         onPress={() => adjustWeight(delta)}
                         style={({ pressed }) => [
-                          styles.stepperBtn,
-                          styles.stepperBtnMinus,
+                          styles.stepperPill,
+                          styles.stepperPillMinus,
                           pressed && styles.pressed,
                         ]}>
-                        <Text style={styles.stepperBtnText}>{delta}</Text>
+                        <Text style={styles.stepperPillText}>{delta}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -347,15 +349,15 @@ export default function CalculatorScreen() {
                         key={delta}
                         onPress={() => adjustWeight(delta)}
                         style={({ pressed }) => [
-                          styles.stepperBtn,
-                          styles.stepperBtnPlus,
+                          styles.stepperPill,
+                          styles.stepperPillPlus,
                           {
-                            borderColor: `${theme.accent}30`,
-                            backgroundColor: `${theme.accent}08`,
+                            borderColor: `${theme.accent}40`,
+                            backgroundColor: `${theme.accent}10`,
                           },
                           pressed && styles.pressed,
                         ]}>
-                        <Text style={[styles.stepperBtnText, { color: theme.accent }]}>
+                        <Text style={[styles.stepperPillText, { color: theme.accent }]}>
                           +{delta}
                         </Text>
                       </Pressable>
@@ -364,7 +366,7 @@ export default function CalculatorScreen() {
                 </View>
               </View>
 
-              {/* Barbell Load Benchmarks (Clean 2-Column Grid) */}
+              {/* Barbell Load Benchmarks (Curved Stadium Grid) */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionCardHeader}>
                   <MaterialCommunityIcons name="weight-lifter" size={18} color={theme.accent} />
@@ -382,7 +384,7 @@ export default function CalculatorScreen() {
                           styles.benchmarkGridCard,
                           isSelected && [
                             styles.benchmarkGridCardSelected,
-                            { borderColor: theme.accent, backgroundColor: `${theme.accent}12` },
+                            { borderColor: theme.accent, backgroundColor: `${theme.accent}14` },
                           ],
                           pressed && styles.pressed,
                         ]}>
@@ -427,7 +429,7 @@ export default function CalculatorScreen() {
                           styles.dumbbellPill,
                           isSelected && [
                             styles.dumbbellPillSelected,
-                            { borderColor: theme.accent, backgroundColor: `${theme.accent}15` },
+                            { borderColor: theme.accent, backgroundColor: `${theme.accent}18` },
                           ],
                           pressed && styles.pressed,
                         ]}>
@@ -452,11 +454,15 @@ export default function CalculatorScreen() {
                 </View>
               </View>
 
-              {/* Exact Formula Reference Footer */}
+              {/* Formula & Reference Information */}
               <View style={styles.formulaCard}>
-                <MaterialCommunityIcons name="calculator-variant" size={18} color={Brand.textMuted} />
+                <MaterialCommunityIcons
+                  name="information-outline"
+                  size={18}
+                  color={theme.accent}
+                />
                 <View style={styles.formulaTextCol}>
-                  <Text style={styles.formulaTitle}>Exact Scientific Conversion Ratio</Text>
+                  <Text style={styles.formulaTitle}>Exact Scientific Precision</Text>
                   <Text style={styles.formulaDetails}>
                     1 kg = 2.20462262 lbs · 1 lb = 0.45359237 kg
                   </Text>
@@ -553,7 +559,7 @@ const styles = StyleSheet.create({
   },
   converterHeroCard: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.xl,
+    borderRadius: 28,
     padding: Spacing.four,
     borderWidth: 1.5,
     borderColor: Brand.cardBorder,
@@ -562,8 +568,8 @@ const styles = StyleSheet.create({
   },
   unitInputBox: {
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
+    borderRadius: 22,
+    padding: Spacing.four,
     borderWidth: 1.5,
     borderColor: 'transparent',
     gap: Spacing.one,
@@ -578,7 +584,7 @@ const styles = StyleSheet.create({
   },
   unitPill: {
     borderRadius: Radius.pill,
-    paddingHorizontal: 9,
+    paddingHorizontal: 10,
     paddingVertical: 4,
   },
   unitPillText: {
@@ -599,7 +605,7 @@ const styles = StyleSheet.create({
   },
   bigNumberInput: {
     color: '#FFFFFF',
-    fontSize: 36,
+    fontSize: 38,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     padding: 0,
@@ -612,17 +618,21 @@ const styles = StyleSheet.create({
   },
   swapLine: {
     flex: 1,
-    height: 1,
+    height: 1.5,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   swapBadgeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: Brand.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   stepperSection: {
     gap: 8,
@@ -636,26 +646,30 @@ const styles = StyleSheet.create({
   },
   stepperRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     width: '100%',
   },
-  stepperBtn: {
+  stepperPill: {
     flex: 1,
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.xs,
-    paddingVertical: 9,
+    borderRadius: Radius.pill,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  stepperBtnMinus: {
     borderColor: 'rgba(255, 255, 255, 0.08)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  stepperBtnPlus: {
-    borderWidth: 1,
+  stepperPillMinus: {
+    borderColor: 'rgba(255, 255, 255, 0.09)',
   },
-  stepperBtnText: {
+  stepperPillPlus: {
+    borderWidth: 1.5,
+  },
+  stepperPillText: {
     color: Brand.textSecondary,
     fontSize: 12,
     fontWeight: '800',
@@ -663,7 +677,7 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     backgroundColor: Brand.card,
-    borderRadius: Radius.xl,
+    borderRadius: 24,
     padding: Spacing.four,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
@@ -689,7 +703,7 @@ const styles = StyleSheet.create({
   benchmarkGridCard: {
     width: '48.5%',
     backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.lg,
+    borderRadius: 18,
     padding: Spacing.three,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
@@ -744,8 +758,8 @@ const styles = StyleSheet.create({
     gap: 5,
     backgroundColor: Brand.cardElevated,
     borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 8,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: 9,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
   },
@@ -777,7 +791,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     backgroundColor: Brand.card,
-    borderRadius: Radius.lg,
+    borderRadius: 20,
     padding: Spacing.three,
     borderWidth: 1,
     borderColor: Brand.cardBorder,
@@ -803,7 +817,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Brand.emerald,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.four,
     paddingVertical: 10,
