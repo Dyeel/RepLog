@@ -64,6 +64,7 @@ export default function CalculatorScreen() {
   // Live Synchronized Dual Inputs
   const [kgVal, setKgVal] = useState('100');
   const [lbsVal, setLbsVal] = useState('220.5');
+  const [topUnit, setTopUnit] = useState<'kg' | 'lbs'>('kg');
   const [activeInput, setActiveInput] = useState<'kg' | 'lbs'>('kg');
 
   // Animated Swap Rotation
@@ -108,16 +109,18 @@ export default function CalculatorScreen() {
     }
   };
 
-  const handleSwapPress = () => {
+  // Middle switch button: ONLY this swaps the top and bottom positions!
+  const handleMiddleSwitchPress = () => {
     // 1. Rotate the swap badge 180 degrees
     swapRotation.value = withSpring(swapRotation.value + 180, {
       damping: 14,
       stiffness: 160,
     });
 
-    // 2. Invert active focus & swap the values
-    const nextInput = activeInput === 'kg' ? 'lbs' : 'kg';
-    setActiveInput(nextInput);
+    // 2. Swap top and bottom unit layout
+    const nextTop = topUnit === 'kg' ? 'lbs' : 'kg';
+    setTopUnit(nextTop);
+    setActiveInput(nextTop);
   };
 
   const adjustWeight = (delta: number) => {
@@ -147,6 +150,110 @@ export default function CalculatorScreen() {
     setLbsVal('');
   };
 
+  const renderKgBox = () => (
+    <Pressable
+      key="kg-box"
+      onPress={() => setActiveInput('kg')}
+      style={[
+        styles.unitInputBox,
+        activeInput === 'kg' && [
+          styles.unitInputBoxActive,
+          { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
+        ],
+      ]}>
+      <View style={styles.unitInputHeader}>
+        <View
+          style={[
+            styles.unitPill,
+            activeInput === 'kg'
+              ? { backgroundColor: `${theme.accent}20` }
+              : styles.unitPillSecondary,
+          ]}>
+          <Text
+            style={[
+              styles.unitPillText,
+              activeInput === 'kg'
+                ? { color: theme.accent }
+                : styles.unitPillTextSecondary,
+            ]}>
+            KILOGRAMS
+          </Text>
+        </View>
+        <Text
+          style={[
+            styles.unitSymbolLarge,
+            activeInput === 'kg' && { color: theme.accent },
+          ]}>
+          KG
+        </Text>
+      </View>
+
+      <TextInput
+        value={kgVal}
+        onChangeText={handleKgChange}
+        onFocus={() => setActiveInput('kg')}
+        keyboardType="decimal-pad"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
+        placeholder="0"
+        placeholderTextColor={Brand.textMuted}
+        style={styles.bigNumberInput}
+      />
+    </Pressable>
+  );
+
+  const renderLbsBox = () => (
+    <Pressable
+      key="lbs-box"
+      onPress={() => setActiveInput('lbs')}
+      style={[
+        styles.unitInputBox,
+        activeInput === 'lbs' && [
+          styles.unitInputBoxActive,
+          { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
+        ],
+      ]}>
+      <View style={styles.unitInputHeader}>
+        <View
+          style={[
+            styles.unitPill,
+            activeInput === 'lbs'
+              ? { backgroundColor: `${theme.accent}20` }
+              : styles.unitPillSecondary,
+          ]}>
+          <Text
+            style={[
+              styles.unitPillText,
+              activeInput === 'lbs'
+                ? { color: theme.accent }
+                : styles.unitPillTextSecondary,
+            ]}>
+            POUNDS
+          </Text>
+        </View>
+        <Text
+          style={[
+            styles.unitSymbolLarge,
+            activeInput === 'lbs' && { color: theme.accent },
+          ]}>
+          LBS
+        </Text>
+      </View>
+
+      <TextInput
+        value={lbsVal}
+        onChangeText={handleLbsChange}
+        onFocus={() => setActiveInput('lbs')}
+        keyboardType="decimal-pad"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
+        placeholder="0"
+        placeholderTextColor={Brand.textMuted}
+        style={styles.bigNumberInput}
+      />
+    </Pressable>
+  );
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -164,7 +271,9 @@ export default function CalculatorScreen() {
                 <View style={styles.headerTitleRow}>
                   <View>
                     <Text style={styles.sectionTag}>PRECISION CONVERTER</Text>
-                    <Text style={styles.headline}>KG ⇄ LBS</Text>
+                    <Text style={styles.headline}>
+                      {topUnit === 'kg' ? 'KG ⇄ LBS' : 'LBS ⇄ KG'}
+                    </Text>
                   </View>
 
                   <View style={styles.headerActions}>
@@ -186,61 +295,14 @@ export default function CalculatorScreen() {
 
               {/* Primary Interactive Dual Converter Hero Card */}
               <View style={styles.converterHeroCard}>
-                {/* 1. Kilograms Card Box */}
-                <Pressable
-                  onPress={() => setActiveInput('kg')}
-                  style={[
-                    styles.unitInputBox,
-                    activeInput === 'kg' && [
-                      styles.unitInputBoxActive,
-                      { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
-                    ],
-                  ]}>
-                  <View style={styles.unitInputHeader}>
-                    <View
-                      style={[
-                        styles.unitPill,
-                        activeInput === 'kg'
-                          ? { backgroundColor: `${theme.accent}20` }
-                          : styles.unitPillSecondary,
-                      ]}>
-                      <Text
-                        style={[
-                          styles.unitPillText,
-                          activeInput === 'kg'
-                            ? { color: theme.accent }
-                            : styles.unitPillTextSecondary,
-                        ]}>
-                        KILOGRAMS
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.unitSymbolLarge,
-                        activeInput === 'kg' && { color: theme.accent },
-                      ]}>
-                      KG
-                    </Text>
-                  </View>
+                {/* Top Box (Swapped only via the middle button) */}
+                {topUnit === 'kg' ? renderKgBox() : renderLbsBox()}
 
-                  <TextInput
-                    value={kgVal}
-                    onChangeText={handleKgChange}
-                    onFocus={() => setActiveInput('kg')}
-                    keyboardType="decimal-pad"
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                    placeholder="0"
-                    placeholderTextColor={Brand.textMuted}
-                    style={styles.bigNumberInput}
-                  />
-                </Pressable>
-
-                {/* Interactive Functional Swap Button Divider */}
+                {/* Middle Switch Button Divider (Swaps top & bottom on tap) */}
                 <View style={styles.swapDividerRow}>
                   <View style={styles.swapLine} />
                   <Pressable
-                    onPress={handleSwapPress}
+                    onPress={handleMiddleSwitchPress}
                     style={({ pressed }) => [
                       styles.swapBadgeBtn,
                       { borderColor: `${theme.accent}50` },
@@ -253,55 +315,8 @@ export default function CalculatorScreen() {
                   <View style={styles.swapLine} />
                 </View>
 
-                {/* 2. Pounds Card Box (Directly editable in place) */}
-                <Pressable
-                  onPress={() => setActiveInput('lbs')}
-                  style={[
-                    styles.unitInputBox,
-                    activeInput === 'lbs' && [
-                      styles.unitInputBoxActive,
-                      { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
-                    ],
-                  ]}>
-                  <View style={styles.unitInputHeader}>
-                    <View
-                      style={[
-                        styles.unitPill,
-                        activeInput === 'lbs'
-                          ? { backgroundColor: `${theme.accent}20` }
-                          : styles.unitPillSecondary,
-                      ]}>
-                      <Text
-                        style={[
-                          styles.unitPillText,
-                          activeInput === 'lbs'
-                            ? { color: theme.accent }
-                            : styles.unitPillTextSecondary,
-                        ]}>
-                        POUNDS
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.unitSymbolLarge,
-                        activeInput === 'lbs' && { color: theme.accent },
-                      ]}>
-                      LBS
-                    </Text>
-                  </View>
-
-                  <TextInput
-                    value={lbsVal}
-                    onChangeText={handleLbsChange}
-                    onFocus={() => setActiveInput('lbs')}
-                    keyboardType="decimal-pad"
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                    placeholder="0"
-                    placeholderTextColor={Brand.textMuted}
-                    style={styles.bigNumberInput}
-                  />
-                </Pressable>
+                {/* Bottom Box (Swapped only via the middle button) */}
+                {topUnit === 'kg' ? renderLbsBox() : renderKgBox()}
 
                 {/* Quick Increment Steppers Grid (Clean 4-column balanced rows, 0 leak) */}
                 <View style={styles.stepperSection}>
