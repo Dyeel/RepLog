@@ -18,23 +18,23 @@ import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { AnimatedTabScreen } from '@/components/ui';
 import { convertWeight } from '@/lib/utils';
 
-type BenchmarkItem = {
-  plates: string;
+type BenchmarkCard = {
+  tag: string;
   lbs: string;
   kg: string;
-  name: string;
+  sub: string;
 };
 
-const BARBELL_BENCHMARKS: BenchmarkItem[] = [
-  { plates: 'Bar', lbs: '45', kg: '20.4', name: 'Standard Olympic Bar' },
-  { plates: '1 Plate', lbs: '135', kg: '61.2', name: '135 lbs / 1 Plate per side' },
-  { plates: '1 Plate + 25s', lbs: '185', kg: '83.9', name: '185 lbs / 1 Plate + 25 lb' },
-  { plates: '2 Plates', lbs: '225', kg: '102.1', name: '225 lbs / 2 Plates per side' },
-  { plates: '2 Plates + 25s', lbs: '275', kg: '124.7', name: '275 lbs / 2 Plates + 25 lb' },
-  { plates: '3 Plates', lbs: '315', kg: '142.9', name: '315 lbs / 3 Plates per side' },
-  { plates: '3 Plates + 25s', lbs: '365', kg: '165.6', name: '365 lbs / 3 Plates + 25 lb' },
-  { plates: '4 Plates', lbs: '405', kg: '183.7', name: '405 lbs / 4 Plates per side' },
-  { plates: '5 Plates', lbs: '495', kg: '224.5', name: '495 lbs / 5 Plates per side' },
+const BARBELL_BENCHMARKS: BenchmarkCard[] = [
+  { tag: 'Bar Only', lbs: '45', kg: '20.4', sub: 'Olympic Bar' },
+  { tag: '1 Plate', lbs: '135', kg: '61.2', sub: '45 lb / 20 kg' },
+  { tag: '1 Plate + 25', lbs: '185', kg: '83.9', sub: '+25 lb / 11.3 kg' },
+  { tag: '2 Plates', lbs: '225', kg: '102.1', sub: '2 × 45 lb / 20 kg' },
+  { tag: '2 Plates + 25', lbs: '275', kg: '124.7', sub: '+25 lb / 11.3 kg' },
+  { tag: '3 Plates', lbs: '315', kg: '142.9', sub: '3 × 45 lb / 20 kg' },
+  { tag: '3 Plates + 25', lbs: '365', kg: '165.6', sub: '+25 lb / 11.3 kg' },
+  { tag: '4 Plates', lbs: '405', kg: '183.7', sub: '4 × 45 lb / 20 kg' },
+  { tag: '5 Plates', lbs: '495', kg: '224.5', sub: '5 × 45 lb / 20 kg' },
 ];
 
 const DUMBBELL_PRESETS = [
@@ -107,7 +107,7 @@ export default function CalculatorScreen() {
     handleKgChange(kg);
   };
 
-  const setExactBenchmark = (item: BenchmarkItem) => {
+  const setExactBenchmark = (item: BenchmarkCard) => {
     setKgVal(item.kg);
     setLbsVal(item.lbs);
   };
@@ -177,7 +177,7 @@ export default function CalculatorScreen() {
                     onSubmitEditing={Keyboard.dismiss}
                     placeholder="0"
                     placeholderTextColor={Brand.textMuted}
-                    style={[styles.bigNumberInput, activeInput === 'kg' && styles.numberInputActive]}
+                    style={styles.bigNumberInput}
                   />
                 </Pressable>
 
@@ -185,7 +185,7 @@ export default function CalculatorScreen() {
                 <View style={styles.swapDividerRow}>
                   <View style={styles.swapLine} />
                   <View style={styles.swapBadge}>
-                    <MaterialCommunityIcons name="swap-vertical" size={20} color={Brand.emerald} />
+                    <MaterialCommunityIcons name="swap-vertical" size={18} color={Brand.emerald} />
                   </View>
                   <View style={styles.swapLine} />
                 </View>
@@ -215,7 +215,7 @@ export default function CalculatorScreen() {
                     onSubmitEditing={Keyboard.dismiss}
                     placeholder="0"
                     placeholderTextColor={Brand.textMuted}
-                    style={[styles.bigNumberInput, activeInput === 'lbs' && styles.numberInputActive]}
+                    style={styles.bigNumberInput}
                   />
                 </Pressable>
 
@@ -236,6 +236,41 @@ export default function CalculatorScreen() {
                       </Pressable>
                     ))}
                   </View>
+                </View>
+              </View>
+
+              {/* Barbell Load Benchmarks (Clean 2-Column Grid) */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <MaterialCommunityIcons name="weight-lifter" size={18} color={Brand.emerald} />
+                  <Text style={styles.sectionCardTitle}>OLYMPIC BARBELL BENCHMARKS</Text>
+                </View>
+
+                <View style={styles.benchmarksGrid}>
+                  {BARBELL_BENCHMARKS.map((item) => {
+                    const isSelected = lbsVal === item.lbs;
+                    return (
+                      <Pressable
+                        key={item.lbs}
+                        onPress={() => setExactBenchmark(item)}
+                        style={({ pressed }) => [
+                          styles.benchmarkGridCard,
+                          isSelected && styles.benchmarkGridCardSelected,
+                          pressed && styles.pressed,
+                        ]}>
+                        <View style={styles.benchmarkCardTop}>
+                          <Text style={styles.benchmarkTagText}>{item.tag}</Text>
+                          <Text style={styles.benchmarkSubText}>{item.sub}</Text>
+                        </View>
+
+                        <View style={styles.benchmarkValuesRow}>
+                          <Text style={styles.gridLbsText}>{item.lbs} lbs</Text>
+                          <Text style={styles.gridArrowText}>⇄</Text>
+                          <Text style={styles.gridKgText}>{item.kg} kg</Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </View>
 
@@ -272,42 +307,6 @@ export default function CalculatorScreen() {
                           ]}>
                           {db.lbs} lbs
                         </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Barbell Load Benchmarks */}
-              <View style={styles.sectionCard}>
-                <View style={styles.sectionCardHeader}>
-                  <MaterialCommunityIcons name="weight-lifter" size={18} color={Brand.emerald} />
-                  <Text style={styles.sectionCardTitle}>OLYMPIC BARBELL BENCHMARKS</Text>
-                </View>
-                <View style={styles.benchmarkList}>
-                  {BARBELL_BENCHMARKS.map((item, index) => {
-                    const isSelected = lbsVal === item.lbs;
-                    return (
-                      <Pressable
-                        key={item.lbs}
-                        onPress={() => setExactBenchmark(item)}
-                        style={({ pressed }) => [
-                          styles.benchmarkCardRow,
-                          isSelected && styles.benchmarkCardRowSelected,
-                          pressed && styles.pressed,
-                        ]}>
-                        <View style={styles.benchmarkLeftCol}>
-                          <View style={styles.benchmarkBadge}>
-                            <Text style={styles.benchmarkBadgeText}>{item.plates}</Text>
-                          </View>
-                          <Text style={styles.benchmarkNameText}>{item.name}</Text>
-                        </View>
-
-                        <View style={styles.benchmarkRightCol}>
-                          <Text style={styles.benchmarkLbsText}>{item.lbs} lbs</Text>
-                          <Text style={styles.benchmarkArrowText}>⇄</Text>
-                          <Text style={styles.benchmarkKgText}>{item.kg} kg</Text>
-                        </View>
                       </Pressable>
                     );
                   })}
@@ -468,9 +467,6 @@ const styles = StyleSheet.create({
     padding: 0,
     marginTop: 2,
   },
-  numberInputActive: {
-    color: '#FFFFFF',
-  },
   swapDividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -482,9 +478,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   swapBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: Brand.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
@@ -508,7 +504,7 @@ const styles = StyleSheet.create({
   },
   stepperBtn: {
     flex: 1,
-    minWidth: 40,
+    minWidth: 36,
     backgroundColor: Brand.cardElevated,
     borderRadius: Radius.xs,
     paddingVertical: 6,
@@ -541,6 +537,61 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.8,
+  },
+  benchmarksGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  benchmarkGridCard: {
+    width: '48.5%',
+    backgroundColor: Brand.cardElevated,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: Brand.cardBorder,
+    gap: 6,
+  },
+  benchmarkGridCardSelected: {
+    borderColor: Brand.emerald,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  benchmarkCardTop: {
+    gap: 1,
+  },
+  benchmarkTagText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  benchmarkSubText: {
+    color: Brand.textMuted,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  benchmarkValuesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  gridLbsText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  gridArrowText: {
+    color: Brand.textMuted,
+    fontSize: 10,
+  },
+  gridKgText: {
+    color: Brand.emerald,
+    fontSize: 12,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   dumbbellPillsGrid: {
     flexDirection: 'row',
@@ -585,71 +636,6 @@ const styles = StyleSheet.create({
   dumbbellPillLbsSelected: {
     color: '#FFFFFF',
     fontWeight: '700',
-  },
-  benchmarkList: {
-    backgroundColor: Brand.cardElevated,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Brand.cardBorder,
-    overflow: 'hidden',
-  },
-  benchmarkCardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
-  },
-  benchmarkCardRowSelected: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-  },
-  benchmarkLeftCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    flex: 1,
-  },
-  benchmarkBadge: {
-    backgroundColor: Brand.card,
-    borderRadius: Radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  benchmarkBadgeText: {
-    color: Brand.emerald,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  benchmarkNameText: {
-    color: Brand.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-  },
-  benchmarkRightCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  benchmarkLbsText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  benchmarkArrowText: {
-    color: Brand.textMuted,
-    fontSize: 10,
-  },
-  benchmarkKgText: {
-    color: Brand.emerald,
-    fontSize: 12,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
   },
   formulaCard: {
     flexDirection: 'row',
