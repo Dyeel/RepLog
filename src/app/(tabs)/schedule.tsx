@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WeeklyScheduleStrip } from '@/components/schedule';
-import { AnimatedTabScreen } from '@/components/ui';
+import { AnimatedTabScreen, ConfirmModal } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
@@ -23,29 +23,16 @@ import { DAY_LABELS, DAYS_OF_WEEK, WORKOUT_LABELS, WorkoutFrequency } from '@/ty
 
 const FREQUENCIES: WorkoutFrequency[] = [2, 3, 4, 5, 6];
 
-import { showAlert } from '@/lib/alert';
-
 export default function ScheduleScreen() {
   const { isReady, frequency, schedule, setFrequency, updateScheduleDay } = useWorkoutStore();
   const theme = useTheme();
   const [editingDay, setEditingDay] = useState<(typeof DAYS_OF_WEEK)[number] | null>(null);
+  const [pendingFrequency, setPendingFrequency] = useState<WorkoutFrequency | null>(null);
   const today = getTodayDayOfWeek();
 
   const handleFrequencyChange = (next: WorkoutFrequency) => {
     if (next === frequency) return;
-
-    showAlert(
-      'Reset Routine Split?',
-      `Switching to ${next} days/week will apply standard preset splits. Custom days can be edited below.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: `Apply ${next}x Split`,
-          style: 'destructive',
-          onPress: () => setFrequency(next),
-        },
-      ],
-    );
+    setPendingFrequency(next);
   };
 
   if (!isReady) {
@@ -61,7 +48,7 @@ export default function ScheduleScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
         <AnimatedTabScreen>
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {/* Header */}
@@ -240,6 +227,25 @@ export default function ScheduleScreen() {
             </View>
           </ScrollView>
         </AnimatedTabScreen>
+
+        {/* Reset Routine Split Confirmation Modal */}
+        <ConfirmModal
+          visible={!!pendingFrequency}
+          title="Reset Routine Split?"
+          message={
+            pendingFrequency
+              ? `Switching to ${pendingFrequency} days/week will apply standard preset splits. Custom days can be edited.`
+              : ''
+          }
+          confirmLabel={`Apply ${pendingFrequency || ''}x Split`}
+          onConfirm={() => {
+            if (pendingFrequency) {
+              setFrequency(pendingFrequency);
+              setPendingFrequency(null);
+            }
+          }}
+          onCancel={() => setPendingFrequency(null)}
+        />
       </SafeAreaView>
     </View>
   );

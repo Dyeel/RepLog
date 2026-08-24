@@ -22,6 +22,7 @@ import {
 } from '@/components/analytics';
 import {
   AnimatedTabScreen,
+  ConfirmModal,
   ThemeCustomizerModal,
 } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
@@ -56,6 +57,8 @@ export default function ProfileScreen() {
   const [isThemeModalVisible, setIsThemeModalVisible] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(athleteName || 'Athlete Profile');
+
+  const [deleteWeightTarget, setDeleteWeightTarget] = useState<{ id: string; weight: number } | null>(null);
 
   const totalSessionsCount = useMemo(() => {
     return sessions.length || stats.totalSessions || 0;
@@ -115,24 +118,13 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteEntry = (id: string, weight: number) => {
-    showAlert(
-      'Delete Weight Entry?',
-      `Are you sure you want to remove the ${weight} ${unitPreference} entry?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => deleteBodyWeightLog(id),
-        },
-      ],
-    );
+    setDeleteWeightTarget({ id, weight });
   };
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
         <AnimatedTabScreen>
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {/* Header with Top-Right Little Theme Button */}
@@ -465,6 +457,25 @@ export default function ProfileScreen() {
         <ThemeCustomizerModal
           visible={isThemeModalVisible}
           onClose={() => setIsThemeModalVisible(false)}
+        />
+
+        {/* Delete Weight Entry Confirmation Modal */}
+        <ConfirmModal
+          visible={!!deleteWeightTarget}
+          title="Delete Weight Entry?"
+          message={
+            deleteWeightTarget
+              ? `Are you sure you want to remove the ${deleteWeightTarget.weight} ${unitPreference} entry?`
+              : ''
+          }
+          confirmLabel="Delete"
+          onConfirm={() => {
+            if (deleteWeightTarget) {
+              deleteBodyWeightLog(deleteWeightTarget.id);
+              setDeleteWeightTarget(null);
+            }
+          }}
+          onCancel={() => setDeleteWeightTarget(null)}
         />
       </SafeAreaView>
     </View>

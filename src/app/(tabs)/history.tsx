@@ -15,19 +15,18 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecentSessionCard } from '@/components/schedule';
-import { AnimatedTabScreen } from '@/components/ui';
+import { AnimatedTabScreen, ConfirmModal } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { groupLogsIntoSessions } from '@/lib/workout-sessions';
-
-import { showAlert } from '@/lib/alert';
 
 export default function HistoryScreen() {
   const { isReady, logs, schedule, unitPreference, deleteSessionByDate } = useWorkoutStore();
   const theme = useTheme();
   const [filter, setFilter] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ dateKey: string; title: string; dateLabel: string } | null>(null);
 
   const sessions = useMemo(() => {
     const all = groupLogsIntoSessions(logs, schedule, unitPreference);
@@ -41,20 +40,7 @@ export default function HistoryScreen() {
   }, [filter, logs, schedule, unitPreference]);
 
   const handleDeleteSession = (dateKey: string, title: string, dateLabel: string) => {
-    showAlert(
-      'Delete Workout?',
-      `Are you sure you want to delete ${title} on ${dateLabel}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteSessionByDate(dateKey);
-          },
-        },
-      ],
-    );
+    setDeleteTarget({ dateKey, title, dateLabel });
   };
 
   if (!isReady) {
@@ -68,7 +54,7 @@ export default function HistoryScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
         <AnimatedTabScreen>
           <View style={styles.content}>
             {/* Header with Activity Summary */}
@@ -149,6 +135,25 @@ export default function HistoryScreen() {
             />
           </View>
         </AnimatedTabScreen>
+
+        {/* Delete Workout Confirmation Modal */}
+        <ConfirmModal
+          visible={!!deleteTarget}
+          title="Delete Workout Session?"
+          message={
+            deleteTarget
+              ? `Are you sure you want to delete ${deleteTarget.title} on ${deleteTarget.dateLabel}? This will remove all sets.`
+              : ''
+          }
+          confirmLabel="Delete Workout"
+          onConfirm={() => {
+            if (deleteTarget) {
+              deleteSessionByDate(deleteTarget.dateKey);
+              setDeleteTarget(null);
+            }
+          }}
+          onCancel={() => setDeleteTarget(null)}
+        />
       </SafeAreaView>
     </View>
   );

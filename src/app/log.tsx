@@ -26,7 +26,7 @@ import {
   SetRow,
 } from '@/components/workout';
 import { UnitConverterModal } from '@/components/tools';
-import { ExerciseThumbnail, GradientButton, UnitToggle } from '@/components/ui';
+import { ConfirmModal, ExerciseThumbnail, GradientButton, UnitToggle } from '@/components/ui';
 import { Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import {
@@ -73,6 +73,7 @@ export default function LogWorkoutScreen() {
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [plateCalcWeight, setPlateCalcWeight] = useState<string | null>(null);
   const [isConverterVisible, setIsConverterVisible] = useState(false);
+  const [isDiscardModalVisible, setIsDiscardModalVisible] = useState(false);
 
   // Persistent Timer calculation based on startTimestamp
   const startTimestampRef = useRef<number>(activeSession?.startTimestamp || Date.now());
@@ -261,21 +262,7 @@ export default function LogWorkoutScreen() {
   };
 
   const handleDiscard = () => {
-    showAlert(
-      'Discard Workout?',
-      'Are you sure you want to end and discard this workout session? Logged sets will not be saved.',
-      [
-        { text: 'Keep Logging', style: 'cancel' },
-        {
-          text: 'Discard Workout',
-          style: 'destructive',
-          onPress: async () => {
-            await clearActiveSession();
-            router.back();
-          },
-        },
-      ],
-    );
+    setIsDiscardModalVisible(true);
   };
 
   const handleFinishWorkout = async () => {
@@ -507,6 +494,20 @@ export default function LogWorkoutScreen() {
         <UnitConverterModal
           visible={isConverterVisible}
           onClose={() => setIsConverterVisible(false)}
+        />
+
+        {/* Discard Workout Confirmation Modal */}
+        <ConfirmModal
+          visible={isDiscardModalVisible}
+          title="Discard Workout?"
+          message="Are you sure you want to end and discard this workout session? Unsaved sets will be lost."
+          confirmLabel="Discard Workout"
+          onConfirm={async () => {
+            await clearActiveSession();
+            setIsDiscardModalVisible(false);
+            router.back();
+          }}
+          onCancel={() => setIsDiscardModalVisible(false)}
         />
 
         {/* Floating Keyboard Dismiss Bar */}

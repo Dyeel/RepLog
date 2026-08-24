@@ -14,7 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PlateCalculatorModal } from '@/components/workout';
-import { ExerciseThumbnail } from '@/components/ui';
+import { ExerciseThumbnail, ConfirmModal } from '@/components/ui';
 import { Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { calculate1RM, formatDate, formatMonthDay, formatSetLine } from '@/lib/utils';
@@ -26,6 +26,8 @@ export default function WorkoutDetailScreen() {
   const { isReady, logs, schedule, unitPreference, deleteLog, deleteSessionByDate } =
     useWorkoutStore();
   const [plateCalcWeight, setPlateCalcWeight] = useState<string | null>(null);
+  const [isDeleteSessionModalVisible, setIsDeleteSessionModalVisible] = useState(false);
+  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{ id: string; name: string } | null>(null);
 
   const session = useMemo(() => {
     return date ? getSessionByDateKey(logs, schedule, date, unitPreference) : undefined;
@@ -79,38 +81,11 @@ export default function WorkoutDetailScreen() {
   }
 
   const handleDeleteSession = () => {
-    showAlert(
-      'Delete Workout Session?',
-      `Are you sure you want to delete the entire ${session.title} on ${formatMonthDay(session.dateKey)}? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete Workout',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteSessionByDate(session.dateKey);
-            router.back();
-          },
-        },
-      ],
-    );
+    setIsDeleteSessionModalVisible(true);
   };
 
   const handleDeleteExercise = (logId: string, exerciseName: string) => {
-    showAlert(
-      'Delete Exercise?',
-      `Remove ${exerciseName} from this session?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteLog(logId);
-          },
-        },
-      ],
-    );
+    setDeleteExerciseTarget({ id: logId, name: exerciseName });
   };
 
   const handleRepeatWorkout = () => {
@@ -339,6 +314,39 @@ export default function WorkoutDetailScreen() {
             onClose={() => setPlateCalcWeight(null)}
           />
         )}
+
+        {/* Delete Workout Session Modal */}
+        <ConfirmModal
+          visible={isDeleteSessionModalVisible}
+          title="Delete Workout Session?"
+          message={`Are you sure you want to delete the entire ${session.title} on ${formatMonthDay(session.dateKey)}? This action cannot be undone.`}
+          confirmLabel="Delete Workout"
+          onConfirm={async () => {
+            await deleteSessionByDate(session.dateKey);
+            setIsDeleteSessionModalVisible(false);
+            router.back();
+          }}
+          onCancel={() => setIsDeleteSessionModalVisible(false)}
+        />
+
+        {/* Delete Exercise Modal */}
+        <ConfirmModal
+          visible={!!deleteExerciseTarget}
+          title="Remove Exercise?"
+          message={
+            deleteExerciseTarget
+              ? `Remove ${deleteExerciseTarget.name} from this session?`
+              : ''
+          }
+          confirmLabel="Remove"
+          onConfirm={async () => {
+            if (deleteExerciseTarget) {
+              await deleteLog(deleteExerciseTarget.id);
+              setDeleteExerciseTarget(null);
+            }
+          }}
+          onCancel={() => setDeleteExerciseTarget(null)}
+        />
       </SafeAreaView>
     </View>
   );

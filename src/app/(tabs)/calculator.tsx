@@ -256,7 +256,7 @@ export default function CalculatorScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
         <AnimatedTabScreen>
           <KeyboardAvoidingView
             style={styles.flex}
