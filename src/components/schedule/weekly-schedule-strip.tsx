@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { getScheduleAbbreviation } from '@/lib/utils';
 import { DAY_SHORT_LABELS, DayOfWeek, ScheduleDay } from '@/types';
 
@@ -10,6 +11,8 @@ type WeeklyScheduleStripProps = {
 };
 
 export function WeeklyScheduleStrip({ schedule, activeDay }: WeeklyScheduleStripProps) {
+  const theme = useTheme();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -29,9 +32,19 @@ export function WeeklyScheduleStrip({ schedule, activeDay }: WeeklyScheduleStrip
               key={entry.day}
               style={[
                 styles.dayColumn,
-                isActive && styles.dayColumnActive,
+                isActive && [
+                  styles.dayColumnActive,
+                  {
+                    backgroundColor: `${theme.accent}12`,
+                    borderColor: `${theme.accent}40`,
+                  },
+                ],
               ]}>
-              <Text style={[styles.dayLabel, isActive && styles.dayLabelActive]}>
+              <Text
+                style={[
+                  styles.dayLabel,
+                  isActive && { color: theme.accent, fontWeight: '800' },
+                ]}>
                 {DAY_SHORT_LABELS[entry.day]}
               </Text>
 
@@ -39,8 +52,8 @@ export function WeeklyScheduleStrip({ schedule, activeDay }: WeeklyScheduleStrip
                 style={[
                   styles.badge,
                   {
-                    backgroundColor: isActive ? Brand.emerald : badgeStyle.bg,
-                    borderColor: isActive ? Brand.emeraldGlow : badgeStyle.border,
+                    backgroundColor: isActive ? theme.accent : badgeStyle.bg,
+                    borderColor: isActive ? theme.accentGlow : badgeStyle.border,
                   },
                 ]}>
                 <Text
@@ -55,7 +68,9 @@ export function WeeklyScheduleStrip({ schedule, activeDay }: WeeklyScheduleStrip
                 </Text>
               </View>
 
-              {isActive && <View style={styles.activeDot} />}
+              {isActive && (
+                <View style={[styles.activeDot, { backgroundColor: theme.accent }]} />
+              )}
             </View>
           );
         })}
@@ -103,18 +118,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   dayColumnActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   dayLabel: {
     color: Brand.textSecondary,
     fontSize: 12,
     fontWeight: '600',
-  },
-  dayLabelActive: {
-    color: Brand.emerald,
-    fontWeight: '700',
   },
   badge: {
     width: 34,
@@ -131,6 +140,5 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Brand.emerald,
   },
 });

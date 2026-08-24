@@ -10,6 +10,7 @@ export type ThemeDefinition = {
   accent: string;
   accentGlow: string;
   accentMuted: string;
+  gradient: [string, string];
   background: string;
   card: string;
   cardElevated: string;
@@ -28,6 +29,7 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
     accent: '#10B981',
     accentGlow: '#34D399',
     accentMuted: 'rgba(16, 185, 129, 0.14)',
+    gradient: ['#10B981', '#059669'],
     background: '#050507',
     card: '#111216',
     cardElevated: '#17181E',
@@ -44,6 +46,7 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
     accent: '#3B82F6',
     accentGlow: '#60A5FA',
     accentMuted: 'rgba(59, 130, 246, 0.14)',
+    gradient: ['#3B82F6', '#1D4ED8'],
     background: '#040711',
     card: '#0C1220',
     cardElevated: '#131C30',
@@ -60,6 +63,7 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
     accent: '#A855F7',
     accentGlow: '#C084FC',
     accentMuted: 'rgba(168, 85, 247, 0.14)',
+    gradient: ['#A855F7', '#7E22CE'],
     background: '#08040F',
     card: '#140C22',
     cardElevated: '#1D1232',
@@ -76,6 +80,7 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
     accent: '#F59E0B',
     accentGlow: '#FBBF24',
     accentMuted: 'rgba(245, 158, 11, 0.14)',
+    gradient: ['#F59E0B', '#D97706'],
     background: '#0A0704',
     card: '#161009',
     cardElevated: '#21180E',
@@ -92,6 +97,7 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
     accent: '#EF4444',
     accentGlow: '#F87171',
     accentMuted: 'rgba(239, 68, 68, 0.14)',
+    gradient: ['#EF4444', '#B91C1C'],
     background: '#0A0404',
     card: '#160B0B',
     cardElevated: '#221111',
@@ -108,6 +114,7 @@ export const THEME_PALETTES: Record<ThemeId, ThemeDefinition> = {
     accent: '#F8FAFC',
     accentGlow: '#FFFFFF',
     accentMuted: 'rgba(255, 255, 255, 0.14)',
+    gradient: ['#F8FAFC', '#94A3B8'],
     background: '#080808',
     card: '#141414',
     cardElevated: '#1E1E1E',

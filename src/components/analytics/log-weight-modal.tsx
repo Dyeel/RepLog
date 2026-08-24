@@ -15,6 +15,7 @@ import {
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
+import { useTheme } from '@/hooks/use-theme';
 import { convertWeight, toDateKey } from '@/lib/utils';
 import { WeightUnit } from '@/types';
 
@@ -26,6 +27,7 @@ type LogWeightModalProps = {
 
 export function LogWeightModal({ visible, unit: defaultUnit, onClose }: LogWeightModalProps) {
   const { addBodyWeightLog } = useWorkoutStore();
+  const theme = useTheme();
   const [selectedUnit, setSelectedUnit] = useState<WeightUnit>(defaultUnit);
   const [weight, setWeight] = useState('');
   const [note, setNote] = useState('');
@@ -67,7 +69,7 @@ export function LogWeightModal({ visible, unit: defaultUnit, onClose }: LogWeigh
               {/* Header */}
               <View style={styles.header}>
                 <View style={styles.titleRow}>
-                  <MaterialCommunityIcons name="scale-bathroom" size={20} color={Brand.emerald} />
+                  <MaterialCommunityIcons name="scale-bathroom" size={20} color={theme.accent} />
                   <Text style={styles.title}>LOG BODY WEIGHT</Text>
                 </View>
 
@@ -78,7 +80,7 @@ export function LogWeightModal({ visible, unit: defaultUnit, onClose }: LogWeigh
                       onPress={() => handleUnitToggle('kg')}
                       style={[
                         styles.unitToggleBtn,
-                        selectedUnit === 'kg' && styles.unitToggleActive,
+                        selectedUnit === 'kg' && [styles.unitToggleActive, { backgroundColor: theme.accent }],
                       ]}>
                       <Text
                         style={[
@@ -92,7 +94,7 @@ export function LogWeightModal({ visible, unit: defaultUnit, onClose }: LogWeigh
                       onPress={() => handleUnitToggle('lbs')}
                       style={[
                         styles.unitToggleBtn,
-                        selectedUnit === 'lbs' && styles.unitToggleActive,
+                        selectedUnit === 'lbs' && [styles.unitToggleActive, { backgroundColor: theme.accent }],
                       ]}>
                       <Text
                         style={[
@@ -132,7 +134,7 @@ export function LogWeightModal({ visible, unit: defaultUnit, onClose }: LogWeigh
                     autoFocus
                     style={styles.textInput}
                   />
-                  <Text style={styles.unitTag}>{selectedUnit.toUpperCase()}</Text>
+                  <Text style={[styles.unitTag, { color: theme.accent }]}>{selectedUnit.toUpperCase()}</Text>
                 </View>
               </View>
 
@@ -158,6 +160,7 @@ export function LogWeightModal({ visible, unit: defaultUnit, onClose }: LogWeigh
                 disabled={saving || !weight}
                 style={({ pressed }) => [
                   styles.saveBtn,
+                  { backgroundColor: theme.accent },
                   (!weight || saving) && styles.disabled,
                   pressed && styles.pressed,
                 ]}>

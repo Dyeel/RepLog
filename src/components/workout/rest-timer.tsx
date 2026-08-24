@@ -1,40 +1,46 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+type RestTimerProps = {
+  defaultSeconds?: number;
+  onTimerComplete?: () => void;
+};
 
 const PRESETS = [30, 60, 90, 120, 180];
 
-export function RestTimer() {
-  const [targetSeconds, setTargetSeconds] = useState(90);
-  const [secondsRemaining, setSecondsRemaining] = useState(90);
+export function RestTimer({ defaultSeconds = 90, onTimerComplete }: RestTimerProps) {
+  const theme = useTheme();
+  const [targetSeconds, setTargetSeconds] = useState(defaultSeconds);
+  const [secondsRemaining, setSecondsRemaining] = useState(defaultSeconds);
   const [isRunning, setIsRunning] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (isRunning) {
-      timerRef.current = setInterval(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    if (isRunning && secondsRemaining > 0) {
+      interval = setInterval(() => {
         setSecondsRemaining((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!);
             setIsRunning(false);
+            if (onTimerComplete) onTimerComplete();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
     }
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (interval) clearInterval(interval);
     };
-  }, [isRunning]);
+  }, [isRunning, secondsRemaining, onTimerComplete]);
 
-  const startPreset = (seconds: number) => {
+  const handleSetPreset = (seconds: number) => {
     setTargetSeconds(seconds);
     setSecondsRemaining(seconds);
     setIsRunning(true);
@@ -49,14 +55,14 @@ export function RestTimer() {
     }
   };
 
-  const resetTimer = () => {
+  const handleReset = () => {
     setIsRunning(false);
     setSecondsRemaining(targetSeconds);
   };
 
-  const formatTime = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remainder = secs % 60;
+  const formatTime = (totalSecs: number) => {
+    const mins = Math.floor(totalSecs / 60);
+    const remainder = totalSecs % 60;
     return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
   };
 
@@ -69,18 +75,26 @@ export function RestTimer() {
         <Pressable
           onPress={() => setIsExpanded(!isExpanded)}
           style={({ pressed }) => [styles.headerLeft, pressed && styles.pressed]}>
-          <View style={[styles.timerIconBadge, isRunning && styles.timerIconBadgeActive]}>
+          <View
+            style={[
+              styles.timerIconBadge,
+              isRunning && [
+                styles.timerIconBadgeActive,
+                { backgroundColor: `${theme.accent}15`, borderColor: `${theme.accent}40` },
+              ],
+            ]}>
             <MaterialCommunityIcons
               name="timer-outline"
               size={16}
-              color={isRunning ? Brand.emerald : Brand.textSecondary}
+              color={isRunning ? theme.accent : Brand.textSecondary}
             />
           </View>
 
           <View>
             <Text style={styles.title}>REST INTERVAL</Text>
             <Text style={styles.timerDisplay}>
-              {formatTime(secondsRemaining)} {isRunning && <Text style={styles.runningDot}>●</Text>}
+              {formatTime(secondsRemaining)}{' '}
+              {isRunning && <Text style={[styles.runningDot, { color: theme.accent }]}>●</Text>}
             </Text>
           </View>
         </Pressable>
@@ -91,7 +105,9 @@ export function RestTimer() {
             onPress={togglePlayPause}
             style={({ pressed }) => [
               styles.controlBtn,
-              isRunning ? styles.pauseBtn : styles.playBtn,
+              isRunning
+                ? styles.pauseBtn
+                : [styles.playBtn, { backgroundColor: theme.accent }],
               pressed && styles.pressed,
             ]}>
             <MaterialCommunityIcons
@@ -106,47 +122,59 @@ export function RestTimer() {
             style={({ pressed }) => [styles.expandBtn, pressed && styles.pressed]}>
             <MaterialCommunityIcons
               name={isExpanded ? 'chevron-up' : 'chevron-down'}
-              size={18}
-              color={Brand.textMuted}
+              size={20}
+              color={Brand.textSecondary}
             />
           </Pressable>
         </View>
       </View>
 
-      {/* Progress Line */}
-      <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
-      </View>
+      {/* Progress Bar Indicator */}
+      {isRunning && (
+        <View style={styles.progressBarBg}>
+          <View
+            style={[
+              styles.progressBarFill,
+              { width: `${progress * 100}%`, backgroundColor: theme.accent },
+            ]}
+          />
+        </View>
+      )}
 
-      {/* Expanded Preset Selectors */}
+      {/* Expanded Preset Selector */}
       {isExpanded && (
         <View style={styles.expandedContent}>
-          <Text style={styles.presetLabel}>Select Rest Duration:</Text>
+          <Text style={styles.presetLabel}>Quick Select Rest Duration:</Text>
           <View style={styles.presetsRow}>
             {PRESETS.map((seconds) => {
-              const isSelected = targetSeconds === seconds;
+              const isActive = targetSeconds === seconds;
               return (
                 <Pressable
                   key={seconds}
-                  onPress={() => startPreset(seconds)}
+                  onPress={() => handleSetPreset(seconds)}
                   style={({ pressed }) => [
                     styles.presetPill,
-                    isSelected && styles.presetPillActive,
+                    isActive && [
+                      styles.presetPillActive,
+                      { backgroundColor: `${theme.accent}15`, borderColor: theme.accent },
+                    ],
                     pressed && styles.pressed,
                   ]}>
                   <Text
                     style={[
                       styles.presetPillText,
-                      isSelected && styles.presetPillTextActive,
+                      isActive && [styles.presetPillTextActive, { color: theme.accent }],
                     ]}>
-                    {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
+                    {seconds >= 60 ? `${seconds / 60}m` : `${seconds}s`}
                   </Text>
                 </Pressable>
               );
             })}
 
-            <Pressable onPress={resetTimer} style={styles.resetPill}>
-              <MaterialCommunityIcons name="restart" size={14} color={Brand.textMuted} />
+            <Pressable
+              onPress={handleReset}
+              style={({ pressed }) => [styles.resetPill, pressed && styles.pressed]}>
+              <MaterialCommunityIcons name="refresh" size={14} color={Brand.textSecondary} />
             </Pressable>
           </View>
         </View>

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { WeightUnit } from '@/types';
 
 type UnitToggleProps = {
@@ -10,6 +11,8 @@ type UnitToggleProps = {
 };
 
 export function UnitToggle({ value, onChange, compact }: UnitToggleProps) {
+  const theme = useTheme();
+
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
       <Pressable
@@ -17,7 +20,7 @@ export function UnitToggle({ value, onChange, compact }: UnitToggleProps) {
         style={({ pressed }) => [
           styles.pill,
           compact && styles.pillCompact,
-          value === 'kg' && styles.pillActive,
+          value === 'kg' && [styles.pillActive, { backgroundColor: theme.accent }],
           pressed && styles.pressed,
         ]}>
         <Text
@@ -35,7 +38,7 @@ export function UnitToggle({ value, onChange, compact }: UnitToggleProps) {
         style={({ pressed }) => [
           styles.pill,
           compact && styles.pillCompact,
-          value === 'lbs' && styles.pillActive,
+          value === 'lbs' && [styles.pillActive, { backgroundColor: theme.accent }],
           pressed && styles.pressed,
         ]}>
         <Text

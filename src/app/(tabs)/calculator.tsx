@@ -1,5 +1,4 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
   Keyboard,
@@ -12,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -19,8 +19,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedTabScreen } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
+import { AnimatedTabScreen } from '@/components/ui';
+import { useTheme } from '@/hooks/use-theme';
 import { convertWeight } from '@/lib/utils';
 
 type BenchmarkCard = {
@@ -57,12 +58,13 @@ const NEGATIVE_DELTAS = [-10, -5, -2.5, -1];
 const POSITIVE_DELTAS = [+1, +2.5, +5, +10];
 
 export default function CalculatorScreen() {
+  const theme = useTheme();
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Live Synchronized Dual Inputs
   const [kgVal, setKgVal] = useState('100');
   const [lbsVal, setLbsVal] = useState('220.5');
-  const [conversionDirection, setConversionDirection] = useState<'kg_to_lbs' | 'lbs_to_kg'>('kg_to_lbs');
+  const [activeInput, setActiveInput] = useState<'kg' | 'lbs'>('kg');
 
   // Animated Swap Rotation
   const swapRotation = useSharedValue(0);
@@ -87,6 +89,7 @@ export default function CalculatorScreen() {
   }, []);
 
   const handleKgChange = (val: string) => {
+    setActiveInput('kg');
     setKgVal(val);
     if (!val || isNaN(parseFloat(val))) {
       setLbsVal('');
@@ -96,6 +99,7 @@ export default function CalculatorScreen() {
   };
 
   const handleLbsChange = (val: string) => {
+    setActiveInput('lbs');
     setLbsVal(val);
     if (!val || isNaN(parseFloat(val))) {
       setKgVal('');
@@ -111,12 +115,13 @@ export default function CalculatorScreen() {
       stiffness: 160,
     });
 
-    // 2. Swap the top and bottom positions!
-    setConversionDirection((prev) => (prev === 'kg_to_lbs' ? 'lbs_to_kg' : 'kg_to_lbs'));
+    // 2. Invert active focus & swap the values
+    const nextInput = activeInput === 'kg' ? 'lbs' : 'kg';
+    setActiveInput(nextInput);
   };
 
   const adjustWeight = (delta: number) => {
-    if (conversionDirection === 'kg_to_lbs') {
+    if (activeInput === 'kg') {
       const current = parseFloat(kgVal) || 0;
       const next = Math.max(0, Math.round((current + delta) * 10) / 10);
       handleKgChange(next.toString());
@@ -128,7 +133,7 @@ export default function CalculatorScreen() {
   };
 
   const setExactKg = (kg: string) => {
-    setConversionDirection('kg_to_lbs');
+    setActiveInput('kg');
     handleKgChange(kg);
   };
 
@@ -141,70 +146,6 @@ export default function CalculatorScreen() {
     setKgVal('');
     setLbsVal('');
   };
-
-  const isKgOnTop = conversionDirection === 'kg_to_lbs';
-
-  const renderKgBox = (isTop: boolean) => (
-    <Pressable
-      key="kg-box"
-      onPress={() => !isTop && handleSwapPress()}
-      style={[
-        styles.unitInputBox,
-        isTop && styles.unitInputBoxActive,
-      ]}>
-      <View style={styles.unitInputHeader}>
-        <View style={[styles.unitPill, !isTop && styles.unitPillSecondary]}>
-          <Text style={[styles.unitPillText, !isTop && styles.unitPillTextSecondary]}>
-            KILOGRAMS
-          </Text>
-        </View>
-        <Text style={styles.unitSymbolLarge}>KG</Text>
-      </View>
-
-      <TextInput
-        value={kgVal}
-        onChangeText={handleKgChange}
-        onFocus={() => !isTop && handleSwapPress()}
-        keyboardType="decimal-pad"
-        returnKeyType="done"
-        onSubmitEditing={Keyboard.dismiss}
-        placeholder="0"
-        placeholderTextColor={Brand.textMuted}
-        style={styles.bigNumberInput}
-      />
-    </Pressable>
-  );
-
-  const renderLbsBox = (isTop: boolean) => (
-    <Pressable
-      key="lbs-box"
-      onPress={() => !isTop && handleSwapPress()}
-      style={[
-        styles.unitInputBox,
-        isTop && styles.unitInputBoxActive,
-      ]}>
-      <View style={styles.unitInputHeader}>
-        <View style={[styles.unitPill, isTop ? styles.unitPill : styles.unitPillSecondary]}>
-          <Text style={[styles.unitPillText, !isTop && styles.unitPillTextSecondary]}>
-            POUNDS
-          </Text>
-        </View>
-        <Text style={styles.unitSymbolLarge}>LBS</Text>
-      </View>
-
-      <TextInput
-        value={lbsVal}
-        onChangeText={handleLbsChange}
-        onFocus={() => !isTop && handleSwapPress()}
-        keyboardType="decimal-pad"
-        returnKeyType="done"
-        onSubmitEditing={Keyboard.dismiss}
-        placeholder="0"
-        placeholderTextColor={Brand.textMuted}
-        style={styles.bigNumberInput}
-      />
-    </Pressable>
-  );
 
   return (
     <View style={styles.container}>
@@ -223,14 +164,14 @@ export default function CalculatorScreen() {
                 <View style={styles.headerTitleRow}>
                   <View>
                     <Text style={styles.sectionTag}>PRECISION CONVERTER</Text>
-                    <Text style={styles.headline}>
-                      {isKgOnTop ? 'KG ⇄ LBS' : 'LBS ⇄ KG'}
-                    </Text>
+                    <Text style={styles.headline}>KG ⇄ LBS</Text>
                   </View>
 
                   <View style={styles.headerActions}>
                     {isKeyboardVisible && (
-                      <Pressable onPress={Keyboard.dismiss} style={styles.doneBtnHeader}>
+                      <Pressable
+                        onPress={Keyboard.dismiss}
+                        style={[styles.doneBtnHeader, { backgroundColor: theme.accent }]}>
                         <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
                         <Text style={styles.doneBtnHeaderText}>Done</Text>
                       </Pressable>
@@ -245,32 +186,127 @@ export default function CalculatorScreen() {
 
               {/* Primary Interactive Dual Converter Hero Card */}
               <View style={styles.converterHeroCard}>
-                {/* Top Unit Box (Source) */}
-                {isKgOnTop ? renderKgBox(true) : renderLbsBox(true)}
+                {/* 1. Kilograms Card Box */}
+                <Pressable
+                  onPress={() => setActiveInput('kg')}
+                  style={[
+                    styles.unitInputBox,
+                    activeInput === 'kg' && [
+                      styles.unitInputBoxActive,
+                      { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
+                    ],
+                  ]}>
+                  <View style={styles.unitInputHeader}>
+                    <View
+                      style={[
+                        styles.unitPill,
+                        activeInput === 'kg'
+                          ? { backgroundColor: `${theme.accent}20` }
+                          : styles.unitPillSecondary,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.unitPillText,
+                          activeInput === 'kg'
+                            ? { color: theme.accent }
+                            : styles.unitPillTextSecondary,
+                        ]}>
+                        KILOGRAMS
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.unitSymbolLarge,
+                        activeInput === 'kg' && { color: theme.accent },
+                      ]}>
+                      KG
+                    </Text>
+                  </View>
 
-                {/* Interactive Functional Swap Button Divider (Swaps Top and Bottom) */}
+                  <TextInput
+                    value={kgVal}
+                    onChangeText={handleKgChange}
+                    onFocus={() => setActiveInput('kg')}
+                    keyboardType="decimal-pad"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                    placeholder="0"
+                    placeholderTextColor={Brand.textMuted}
+                    style={styles.bigNumberInput}
+                  />
+                </Pressable>
+
+                {/* Interactive Functional Swap Button Divider */}
                 <View style={styles.swapDividerRow}>
                   <View style={styles.swapLine} />
                   <Pressable
                     onPress={handleSwapPress}
                     style={({ pressed }) => [
                       styles.swapBadgeBtn,
+                      { borderColor: `${theme.accent}50` },
                       pressed && styles.pressed,
                     ]}>
                     <Animated.View style={swapAnimatedStyle}>
-                      <MaterialCommunityIcons name="swap-vertical" size={20} color={Brand.emerald} />
+                      <MaterialCommunityIcons name="swap-vertical" size={20} color={theme.accent} />
                     </Animated.View>
                   </Pressable>
                   <View style={styles.swapLine} />
                 </View>
 
-                {/* Bottom Unit Box (Target) */}
-                {isKgOnTop ? renderLbsBox(false) : renderKgBox(false)}
+                {/* 2. Pounds Card Box (Directly editable in place) */}
+                <Pressable
+                  onPress={() => setActiveInput('lbs')}
+                  style={[
+                    styles.unitInputBox,
+                    activeInput === 'lbs' && [
+                      styles.unitInputBoxActive,
+                      { borderColor: theme.accent, backgroundColor: `${theme.accent}08` },
+                    ],
+                  ]}>
+                  <View style={styles.unitInputHeader}>
+                    <View
+                      style={[
+                        styles.unitPill,
+                        activeInput === 'lbs'
+                          ? { backgroundColor: `${theme.accent}20` }
+                          : styles.unitPillSecondary,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.unitPillText,
+                          activeInput === 'lbs'
+                            ? { color: theme.accent }
+                            : styles.unitPillTextSecondary,
+                        ]}>
+                        POUNDS
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.unitSymbolLarge,
+                        activeInput === 'lbs' && { color: theme.accent },
+                      ]}>
+                      LBS
+                    </Text>
+                  </View>
+
+                  <TextInput
+                    value={lbsVal}
+                    onChangeText={handleLbsChange}
+                    onFocus={() => setActiveInput('lbs')}
+                    keyboardType="decimal-pad"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                    placeholder="0"
+                    placeholderTextColor={Brand.textMuted}
+                    style={styles.bigNumberInput}
+                  />
+                </Pressable>
 
                 {/* Quick Increment Steppers Grid (Clean 4-column balanced rows, 0 leak) */}
                 <View style={styles.stepperSection}>
                   <Text style={styles.stepperLabel}>
-                    QUICK ADJUST ({isKgOnTop ? 'KG' : 'LBS'})
+                    QUICK ADJUST ({activeInput.toUpperCase()})
                   </Text>
 
                   {/* Decrements Row */}
@@ -298,9 +334,13 @@ export default function CalculatorScreen() {
                         style={({ pressed }) => [
                           styles.stepperBtn,
                           styles.stepperBtnPlus,
+                          {
+                            borderColor: `${theme.accent}30`,
+                            backgroundColor: `${theme.accent}08`,
+                          },
                           pressed && styles.pressed,
                         ]}>
-                        <Text style={[styles.stepperBtnText, styles.stepperBtnPlusText]}>
+                        <Text style={[styles.stepperBtnText, { color: theme.accent }]}>
                           +{delta}
                         </Text>
                       </Pressable>
@@ -312,7 +352,7 @@ export default function CalculatorScreen() {
               {/* Barbell Load Benchmarks (Clean 2-Column Grid) */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionCardHeader}>
-                  <MaterialCommunityIcons name="weight-lifter" size={18} color={Brand.emerald} />
+                  <MaterialCommunityIcons name="weight-lifter" size={18} color={theme.accent} />
                   <Text style={styles.sectionCardTitle}>OLYMPIC BARBELL BENCHMARKS</Text>
                 </View>
 
@@ -325,18 +365,29 @@ export default function CalculatorScreen() {
                         onPress={() => setExactBenchmark(item)}
                         style={({ pressed }) => [
                           styles.benchmarkGridCard,
-                          isSelected && styles.benchmarkGridCardSelected,
+                          isSelected && [
+                            styles.benchmarkGridCardSelected,
+                            { borderColor: theme.accent, backgroundColor: `${theme.accent}12` },
+                          ],
                           pressed && styles.pressed,
                         ]}>
                         <View style={styles.benchmarkCardTop}>
-                          <Text style={styles.benchmarkTagText}>{item.tag}</Text>
+                          <Text
+                            style={[
+                              styles.benchmarkTagText,
+                              isSelected && { color: theme.accent },
+                            ]}>
+                            {item.tag}
+                          </Text>
                           <Text style={styles.benchmarkSubText}>{item.sub}</Text>
                         </View>
 
                         <View style={styles.benchmarkValuesRow}>
                           <Text style={styles.gridLbsText}>{item.lbs} lbs</Text>
                           <Text style={styles.gridArrowText}>⇄</Text>
-                          <Text style={styles.gridKgText}>{item.kg} kg</Text>
+                          <Text style={[styles.gridKgText, { color: theme.accent }]}>
+                            {item.kg} kg
+                          </Text>
                         </View>
                       </Pressable>
                     );
@@ -347,7 +398,7 @@ export default function CalculatorScreen() {
               {/* Dumbbell & Kettlebell Presets */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionCardHeader}>
-                  <MaterialCommunityIcons name="dumbbell" size={18} color={Brand.emerald} />
+                  <MaterialCommunityIcons name="dumbbell" size={18} color={theme.accent} />
                   <Text style={styles.sectionCardTitle}>DUMBBELL & KETTLEBELL PRESETS</Text>
                 </View>
                 <View style={styles.dumbbellPillsGrid}>
@@ -359,13 +410,16 @@ export default function CalculatorScreen() {
                         onPress={() => setExactKg(db.kg)}
                         style={({ pressed }) => [
                           styles.dumbbellPill,
-                          isSelected && styles.dumbbellPillSelected,
+                          isSelected && [
+                            styles.dumbbellPillSelected,
+                            { borderColor: theme.accent, backgroundColor: `${theme.accent}15` },
+                          ],
                           pressed && styles.pressed,
                         ]}>
                         <Text
                           style={[
                             styles.dumbbellPillKg,
-                            isSelected && styles.dumbbellPillKgSelected,
+                            isSelected && { color: theme.accent, fontWeight: '800' },
                           ]}>
                           {db.kg} kg
                         </Text>
@@ -397,7 +451,9 @@ export default function CalculatorScreen() {
 
             {/* Floating Dismiss Button */}
             {isKeyboardVisible && (
-              <Pressable onPress={Keyboard.dismiss} style={styles.floatingDismissBtn}>
+              <Pressable
+                onPress={Keyboard.dismiss}
+                style={[styles.floatingDismissBtn, { backgroundColor: theme.accent }]}>
                 <MaterialCommunityIcons name="keyboard-close" size={16} color="#050507" />
                 <Text style={styles.floatingDismissText}>Done</Text>
               </Pressable>
@@ -455,7 +511,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Brand.emerald,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,
     paddingVertical: 6,
@@ -513,7 +568,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   unitPillText: {
-    color: Brand.emerald,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -556,11 +610,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(16, 185, 129, 0.35)',
-    shadowColor: Brand.emerald,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
   stepperSection: {
     gap: 8,
@@ -599,9 +648,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
-  },
-  stepperBtnPlusText: {
-    color: Brand.emerald,
   },
   sectionCard: {
     backgroundColor: Brand.card,
@@ -702,10 +748,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-  },
-  dumbbellPillKgSelected: {
-    color: Brand.emerald,
-    fontWeight: '800',
   },
   dumbbellPillArrow: {
     color: Brand.textMuted,

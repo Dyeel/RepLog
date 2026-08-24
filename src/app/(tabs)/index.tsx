@@ -23,6 +23,7 @@ import {
 import { RecentSessionCard, WeeklyScheduleStrip } from '@/components/schedule';
 import { BottomTabInset, Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
+import { useTheme } from '@/hooks/use-theme';
 import { formatHeaderDate, getTodayDayOfWeek } from '@/lib/utils';
 import { groupLogsIntoSessions } from '@/lib/workout-sessions';
 
@@ -37,6 +38,7 @@ export default function HomeScreen() {
     unitPreference,
     activeSession,
   } = useWorkoutStore();
+  const theme = useTheme();
   const today = getTodayDayOfWeek();
   const todaySchedule = schedule.find((entry) => entry.day === today);
   const todayLabel = todaySchedule?.label ?? 'Rest';
@@ -75,7 +77,7 @@ export default function HomeScreen() {
   if (!isReady) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={Brand.emerald} />
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
@@ -99,12 +101,16 @@ export default function HomeScreen() {
                 <Pressable
                   onPress={() => setIsThemeModalOpen(true)}
                   style={({ pressed }) => [styles.themeIconBtn, pressed && styles.pressed]}>
-                  <MaterialCommunityIcons name="palette-outline" size={20} color={Brand.emerald} />
+                  <MaterialCommunityIcons name="palette-outline" size={20} color={theme.accent} />
                 </Pressable>
 
                 <Pressable
                   onPress={() => router.push(`/log?title=${encodeURIComponent(todayLabel)}`)}
-                  style={({ pressed }) => [styles.quickLogBtn, pressed && styles.pressed]}>
+                  style={({ pressed }) => [
+                    styles.quickLogBtn,
+                    { backgroundColor: theme.accent },
+                    pressed && styles.pressed,
+                  ]}>
                   <MaterialCommunityIcons
                     name={activeSession ? 'play-circle' : 'plus'}
                     size={18}
@@ -122,11 +128,17 @@ export default function HomeScreen() {
               <View>
                 <Pressable
                   onPress={() => router.push('/log')}
-                  style={({ pressed }) => [styles.activeSessionBanner, pressed && styles.pressed]}>
+                  style={({ pressed }) => [
+                    styles.activeSessionBanner,
+                    { borderColor: `${theme.accent}60`, backgroundColor: `${theme.accent}08` },
+                    pressed && styles.pressed,
+                  ]}>
                   <View style={styles.activeBannerLeft}>
-                    <PulsingDot size={8} color={Brand.emerald} />
+                    <PulsingDot size={8} color={theme.accent} />
                     <View style={styles.activeTextCol}>
-                      <Text style={styles.activeBannerTitle}>WORKOUT IN PROGRESS</Text>
+                      <Text style={[styles.activeBannerTitle, { color: theme.accent }]}>
+                        WORKOUT IN PROGRESS
+                      </Text>
                       <Text style={styles.activeBannerSubtitle}>
                         {activeSession.title} · {activeSession.exercises.length}{' '}
                         {activeSession.exercises.length === 1 ? 'Exercise' : 'Exercises'}
@@ -135,8 +147,8 @@ export default function HomeScreen() {
                   </View>
 
                   <View style={styles.activeBannerRight}>
-                    <Text style={styles.activeTimerText}>{elapsedText}</Text>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={Brand.emerald} />
+                    <Text style={[styles.activeTimerText, { color: theme.accent }]}>{elapsedText}</Text>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={theme.accent} />
                   </View>
                 </Pressable>
               </View>
@@ -184,7 +196,7 @@ export default function HomeScreen() {
               {/* Metric 1: Weekly Goal */}
               <View style={styles.statCard}>
                 <View style={styles.statIconBadge}>
-                  <MaterialCommunityIcons name="target" size={14} color={Brand.emerald} />
+                  <MaterialCommunityIcons name="target" size={14} color={theme.accent} />
                 </View>
                 <Text style={styles.statValue}>
                   {stats.thisWeekWorkouts}

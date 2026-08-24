@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 type GradientButtonProps = {
   label: string;
@@ -22,12 +23,14 @@ export function GradientButton({
   compact,
   variant = 'primary',
 }: GradientButtonProps) {
+  const theme = useTheme();
+
   const gradientColors: [string, string] =
     variant === 'danger'
       ? ['#F43F5E', '#BE123C']
       : variant === 'secondary'
       ? ['#1C1E2A', '#13141C']
-      : ['#10B981', '#059669'];
+      : theme.gradient;
 
   const textColor = variant === 'secondary' ? Brand.textPrimary : '#FFFFFF';
 
@@ -43,7 +46,7 @@ export function GradientButton({
         style={[
           styles.button,
           compact && styles.buttonCompact,
-          variant === 'primary' && styles.primaryGlow,
+          variant === 'primary' && [styles.primaryGlow, { shadowColor: theme.accent }],
           disabled && styles.disabled,
         ]}>
         {icon}
@@ -69,7 +72,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
   },
   primaryGlow: {
-    shadowColor: Brand.emerald,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

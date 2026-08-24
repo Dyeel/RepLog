@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { DAYS_OF_WEEK, DAY_SHORT_LABELS, WeightUnit, WorkoutLog } from '@/types';
 
 type VolumeChartProps = {
@@ -9,6 +10,8 @@ type VolumeChartProps = {
 };
 
 export function VolumeChart({ logs, unit }: VolumeChartProps) {
+  const theme = useTheme();
+
   // Calculate volume for each day of current week
   const now = new Date();
   const startOfWeek = new Date(now);
@@ -52,7 +55,8 @@ export function VolumeChart({ logs, unit }: VolumeChartProps) {
         <View>
           <Text style={styles.title}>WEEKLY VOLUME PROGRESSION</Text>
           <Text style={styles.totalValue}>
-            {Math.round(totalWeeklyVolume).toLocaleString()} <Text style={styles.unit}>{unit}</Text>
+            {Math.round(totalWeeklyVolume).toLocaleString()}{' '}
+            <Text style={[styles.unit, { color: theme.accent }]}>{unit}</Text>
           </Text>
         </View>
         <Text style={styles.subtext}>Current Week</Text>
@@ -72,11 +76,15 @@ export function VolumeChart({ logs, unit }: VolumeChartProps) {
                   style={[
                     styles.barFill,
                     { height: `${heightPct}%` },
-                    hasActivity && styles.barFillActive,
+                    hasActivity && { backgroundColor: theme.accent },
                   ]}
                 />
               </View>
-              <Text style={[styles.dayLabel, hasActivity && styles.dayLabelActive]}>
+              <Text
+                style={[
+                  styles.dayLabel,
+                  hasActivity && { color: theme.accent, fontWeight: '800' },
+                ]}>
                 {DAY_SHORT_LABELS[d]}
               </Text>
             </View>
@@ -115,7 +123,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   unit: {
-    color: Brand.emerald,
     fontSize: 14,
   },
   subtext: {
@@ -150,15 +157,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 7,
   },
-  barFillActive: {
-    backgroundColor: Brand.emerald,
-  },
   dayLabel: {
     color: Brand.textMuted,
     fontSize: 11,
     fontWeight: '700',
-  },
-  dayLabelActive: {
-    color: '#FFFFFF',
   },
 });

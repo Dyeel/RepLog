@@ -11,6 +11,7 @@ import Svg, {
 } from 'react-native-svg';
 
 import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { formatMonthDay } from '@/lib/utils';
 import { BodyWeightEntry, WeightUnit } from '@/types';
 
@@ -23,6 +24,7 @@ type BodyweightChartProps = {
 type RangeFilter = '7D' | '14D' | '30D' | 'ALL';
 
 export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartProps) {
+  const theme = useTheme();
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('30D');
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
 
@@ -69,7 +71,9 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
           Log your daily scale weigh-in to generate your interactive smooth progression curve.
         </Text>
         {onOpenLogModal && (
-          <Pressable onPress={onOpenLogModal} style={styles.emptyBtn}>
+          <Pressable
+            onPress={onOpenLogModal}
+            style={[styles.emptyBtn, { backgroundColor: theme.accent }]}>
             <Text style={styles.emptyBtnText}>+ Log First Weigh-In</Text>
           </Pressable>
         )}
@@ -150,7 +154,7 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
           <Text style={styles.cardTag}>BODYWEIGHT GRAPH</Text>
           <View style={styles.weightValueRow}>
             <Text style={styles.mainWeightNumber}>{selectedPoint.data.weight}</Text>
-            <Text style={styles.mainWeightUnit}>{unit}</Text>
+            <Text style={[styles.mainWeightUnit, { color: theme.accent }]}>{unit}</Text>
             <Text style={styles.mainWeightDate}>
               · {formatMonthDay(selectedPoint.data.dateKey)}
             </Text>
@@ -166,7 +170,10 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
                 setRangeFilter(r);
                 setActivePointIndex(null);
               }}
-              style={[styles.rangePill, rangeFilter === r && styles.rangePillActive]}>
+              style={[
+                styles.rangePill,
+                rangeFilter === r && [styles.rangePillActive, { backgroundColor: theme.accent }],
+              ]}>
               <Text
                 style={[styles.rangePillText, rangeFilter === r && styles.rangePillTextActive]}>
                 {r}
@@ -186,7 +193,7 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
               stats.delta > 0
                 ? styles.deltaGain
                 : stats.delta < 0
-                ? styles.deltaLoss
+                ? { color: theme.accent }
                 : styles.deltaNeutral,
             ]}>
             {stats.delta > 0 ? `+${stats.delta}` : stats.delta} {unit}
@@ -213,9 +220,9 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
         <Svg width={chartWidth} height={chartHeight}>
           <Defs>
             <LinearGradient id="bwGradient" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={Brand.emerald} stopOpacity="0.35" />
-              <Stop offset="70%" stopColor={Brand.emerald} stopOpacity="0.06" />
-              <Stop offset="100%" stopColor={Brand.emerald} stopOpacity="0.0" />
+              <Stop offset="0%" stopColor={theme.accent} stopOpacity="0.35" />
+              <Stop offset="70%" stopColor={theme.accent} stopOpacity="0.06" />
+              <Stop offset="100%" stopColor={theme.accent} stopOpacity="0.0" />
             </LinearGradient>
           </Defs>
 
@@ -274,7 +281,7 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
           <Path
             d={linePath}
             fill="none"
-            stroke={Brand.emerald}
+            stroke={theme.accent}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -289,8 +296,8 @@ export function BodyweightChart({ logs, unit, onOpenLogModal }: BodyweightChartP
                 cx={pt.x}
                 cy={pt.y}
                 r={isSelected ? '5.5' : '3.5'}
-                fill={isSelected ? '#FFFFFF' : Brand.emerald}
-                stroke={isSelected ? Brand.emerald : '#050507'}
+                fill={isSelected ? '#FFFFFF' : theme.accent}
+                stroke={isSelected ? theme.accent : '#050507'}
                 strokeWidth={isSelected ? '2.5' : '1.5'}
                 onPress={() => setActivePointIndex(idx)}
               />

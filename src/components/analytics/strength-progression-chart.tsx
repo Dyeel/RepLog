@@ -13,6 +13,7 @@ import Svg, {
 
 import { ExerciseThumbnail } from '@/components/ui';
 import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { calculate1RM, formatMonthDay } from '@/lib/utils';
 import { WeightUnit, WorkoutLog } from '@/types';
 
@@ -22,6 +23,7 @@ type StrengthProgressionChartProps = {
 };
 
 export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChartProps) {
+  const theme = useTheme();
   // Extract all distinct exercise names that have logged sets
   const availableExercises = useMemo(() => {
     const names = new Set<string>();
@@ -100,15 +102,12 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
   const values = historyData.map((d) => d.max1RM);
   const minVal = values.length > 0 ? Math.min(...values) : 0;
   const maxVal = values.length > 0 ? Math.max(...values) : 100;
-  const minScale = minVal === maxVal ? minVal - 5 : minVal - 2.5;
-  const maxScale = minVal === maxVal ? maxVal + 5 : maxVal + 2.5;
+
+  const minScale = minVal === maxVal ? Math.max(0, minVal - 10) : Math.max(0, minVal - 5);
+  const maxScale = minVal === maxVal ? maxVal + 10 : maxVal + 5;
   const range = maxScale - minScale || 1;
 
-  const latestPt = historyData[historyData.length - 1];
-  const initialPt = historyData[0];
-  const totalGain = latestPt && initialPt ? latestPt.max1RM - initialPt.max1RM : 0;
-
-  // Build Coordinates
+  // Calculate coordinates
   const points = historyData.map((d, i) => {
     const x =
       historyData.length === 1
@@ -118,7 +117,7 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
     return { x, y, data: d };
   });
 
-  // SVG Paths
+  // SVG Bezier Curve
   let linePath = '';
   let areaPath = '';
 
@@ -153,75 +152,93 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
   const selectedPoint =
     activePointIndex !== null && points[activePointIndex]
       ? points[activePointIndex]
-      : points[points.length - 1];
+      : points[points.length - 1] || null;
+
+  const current1RM = selectedPoint ? Math.round(selectedPoint.data.max1RM) : 0;
+  const bestAllTime = values.length > 0 ? Math.round(Math.max(...values)) : 0;
+  const first1RM = values.length > 0 ? values[0] : 0;
+  const totalGain = Math.round((current1RM - first1RM) * 10) / 10;
 
   return (
     <View style={styles.card}>
-      {/* Header */}
+      {/* Card Header & Title */}
       <View style={styles.cardHeader}>
-        <View style={styles.headerTitleCol}>
-          <Text style={styles.cardTag}>1RM STRENGTH PROGRESSION</Text>
-          <View style={styles.titleRow}>
-            <ExerciseThumbnail exerciseName={selectedExercise} size={28} />
-            <Text style={styles.exerciseTitle} numberOfLines={1}>
-              {selectedExercise}
-            </Text>
-          </View>
+        <View style={styles.titleRow}>
+          <ExerciseThumbnail exerciseName={selectedExercise} size={28} />
+          <Text style={styles.exerciseTitle} numberOfLines={1}>
+            {selectedExercise}
+          </Text>
         </View>
 
-        {selectedPoint && (
-          <View style={styles.current1RMBox}>
-            <Text style={styles.current1RMValue}>
-              {selectedPoint.data.max1RM} <Text style={styles.unitText}>{unit}</Text>
-            </Text>
-            <Text style={styles.current1RMLabel}>Estimated 1RM</Text>
-          </View>
-        )}
+        <View style={styles.current1RMBox}>
+          <Text style={styles.current1RMValue}>
+            {current1RM} <Text style={[styles.unitText, { color: theme.accent }]}>{unit}</Text>
+          </Text>
+          <Text style={styles.current1RMLabel}>
+            {selectedPoint
+              ? `${formatMonthDay(selectedPoint.data.date)} EST. 1RM`
+              : 'ESTIMATED 1RM'}
+          </Text>
+        </View>
       </View>
 
-      {/* Exercise Selector Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.pillsScroll}>
-        {availableExercises.map((name) => {
-          const isSelected = name.toLowerCase() === selectedExercise.toLowerCase();
-          return (
-            <Pressable
-              key={name}
-              onPress={() => {
-                setSelectedExercise(name);
-                setActivePointIndex(null);
-              }}
-              style={[styles.pill, isSelected && styles.pillActive]}>
-              <Text style={[styles.pillText, isSelected && styles.pillTextActive]}>{name}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      {/* Horizontal Exercise Selector Pills */}
+      {availableExercises.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.pillsScroll}>
+          {availableExercises.map((name) => {
+            const isSelected = name.toLowerCase() === selectedExercise.toLowerCase();
+            return (
+              <Pressable
+                key={name}
+                onPress={() => {
+                  setSelectedExercise(name);
+                  setActivePointIndex(null);
+                }}
+                style={[
+                  styles.pill,
+                  isSelected && [
+                    styles.pillActive,
+                    { backgroundColor: theme.accent, borderColor: theme.accent },
+                  ],
+                ]}>
+                <Text
+                  style={[
+                    styles.pillText,
+                    isSelected && styles.pillTextActive,
+                  ]}>
+                  {name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {/* Metrics Ribbon */}
-      {historyData.length > 0 && (
+      {values.length > 0 && (
         <View style={styles.metricsRibbon}>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Total Sessions</Text>
-            <Text style={styles.metricValue}>{historyData.length}</Text>
-          </View>
-          <View style={styles.metricDivider} />
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Max Weight</Text>
+            <Text style={styles.metricLabel}>All-Time Best</Text>
             <Text style={styles.metricValue}>
-              {Math.max(...historyData.map((d) => d.peakWeight))} {unit}
+              {bestAllTime} {unit}
             </Text>
           </View>
           <View style={styles.metricDivider} />
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Strength Gain</Text>
+            <Text style={styles.metricLabel}>Entries</Text>
+            <Text style={styles.metricValue}>{historyData.length} logs</Text>
+          </View>
+          <View style={styles.metricDivider} />
+          <View style={styles.metricItem}>
+            <Text style={styles.metricLabel}>Progression</Text>
             <Text
               style={[
                 styles.metricValue,
                 totalGain > 0
-                  ? styles.gainPositive
+                  ? { color: theme.accent }
                   : totalGain < 0
                   ? styles.gainNegative
                   : styles.gainNeutral,
@@ -238,9 +255,9 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
           <Svg width={chartWidth} height={chartHeight}>
             <Defs>
               <LinearGradient id="strGradient" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor="#10B981" stopOpacity="0.30" />
-                <Stop offset="80%" stopColor="#10B981" stopOpacity="0.05" />
-                <Stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
+                <Stop offset="0%" stopColor={theme.accent} stopOpacity="0.30" />
+                <Stop offset="80%" stopColor={theme.accent} stopOpacity="0.05" />
+                <Stop offset="100%" stopColor={theme.accent} stopOpacity="0.0" />
               </LinearGradient>
             </Defs>
 
@@ -299,7 +316,7 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
             <Path
               d={linePath}
               fill="none"
-              stroke={Brand.emerald}
+              stroke={theme.accent}
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -314,19 +331,19 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
                   cx={pt.x}
                   cy={pt.y}
                   r={isSelected ? '5.5' : '3.5'}
-                  fill={isSelected ? '#FFFFFF' : Brand.emerald}
-                  stroke={isSelected ? Brand.emerald : '#050507'}
+                  fill={isSelected ? '#FFFFFF' : theme.accent}
+                  stroke={isSelected ? theme.accent : '#050507'}
                   strokeWidth={isSelected ? '2.5' : '1.5'}
                   onPress={() => setActivePointIndex(idx)}
                 />
               );
             })}
 
-            {/* X-Axis Date Labels (First & Last) */}
-            {points.length > 0 && (
+            {/* X-Axis Dates */}
+            {points.length > 1 && (
               <>
                 <SvgText
-                  x={points[0].x}
+                  x={paddingLeft}
                   y={chartHeight - 6}
                   fill={Brand.textMuted}
                   fontSize="9"
@@ -334,24 +351,24 @@ export function StrengthProgressionChart({ logs, unit }: StrengthProgressionChar
                   textAnchor="start">
                   {formatMonthDay(points[0].data.date)}
                 </SvgText>
-                {points.length > 1 && (
-                  <SvgText
-                    x={points[points.length - 1].x}
-                    y={chartHeight - 6}
-                    fill={Brand.textMuted}
-                    fontSize="9"
-                    fontWeight="700"
-                    textAnchor="end">
-                    {formatMonthDay(points[points.length - 1].data.date)}
-                  </SvgText>
-                )}
+                <SvgText
+                  x={chartWidth - paddingRight}
+                  y={chartHeight - 6}
+                  fill={Brand.textMuted}
+                  fontSize="9"
+                  fontWeight="700"
+                  textAnchor="end">
+                  {formatMonthDay(points[points.length - 1].data.date)}
+                </SvgText>
               </>
             )}
           </Svg>
         </View>
       ) : (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>No 1RM data for {selectedExercise}</Text>
+          <Text style={styles.emptySubtext}>
+            Add weight & reps for {selectedExercise} to chart strength progression.
+          </Text>
         </View>
       )}
     </View>

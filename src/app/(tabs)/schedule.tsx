@@ -16,6 +16,7 @@ import { WeeklyScheduleStrip } from '@/components/schedule';
 import { AnimatedTabScreen } from '@/components/ui';
 import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
+import { useTheme } from '@/hooks/use-theme';
 import { getDefaultSplit } from '@/lib/defaults';
 import { getTodayDayOfWeek } from '@/lib/utils';
 import { DAY_LABELS, DAYS_OF_WEEK, WORKOUT_LABELS, WorkoutFrequency } from '@/types';
@@ -24,6 +25,7 @@ const FREQUENCIES: WorkoutFrequency[] = [2, 3, 4, 5, 6];
 
 export default function ScheduleScreen() {
   const { isReady, frequency, schedule, setFrequency, updateScheduleDay } = useWorkoutStore();
+  const theme = useTheme();
   const [editingDay, setEditingDay] = useState<(typeof DAYS_OF_WEEK)[number] | null>(null);
   const today = getTodayDayOfWeek();
 
@@ -47,7 +49,7 @@ export default function ScheduleScreen() {
   if (!isReady) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={Brand.emerald} />
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
@@ -81,7 +83,10 @@ export default function ScheduleScreen() {
                       onPress={() => handleFrequencyChange(option)}
                       style={({ pressed }) => [
                         styles.frequencyButton,
-                        selected && styles.frequencyButtonSelected,
+                        selected && [
+                          styles.frequencyButtonSelected,
+                          { backgroundColor: theme.accent, borderColor: theme.accent },
+                        ],
                         pressed && styles.pressed,
                       ]}>
                       <Text
@@ -120,13 +125,36 @@ export default function ScheduleScreen() {
                   const isRest = label.toLowerCase() === 'rest';
 
                   return (
-                    <View key={day} style={[styles.dayCard, isToday && styles.dayCardToday]}>
+                    <View
+                      key={day}
+                      style={[
+                        styles.dayCard,
+                        isToday && [
+                          styles.dayCardToday,
+                          {
+                            borderColor: theme.accent,
+                            backgroundColor: `${theme.accent}08`,
+                          },
+                        ],
+                      ]}>
                       <View style={styles.dayHeader}>
                         <View style={styles.dayTitleRow}>
-                          <Text style={[styles.dayName, isToday && styles.dayNameToday]}>
+                          <Text
+                            style={[
+                              styles.dayName,
+                              isToday && { color: theme.accent, fontWeight: '800' },
+                            ]}>
                             {DAY_LABELS[day]}
                           </Text>
-                          {isToday && <Text style={styles.todayIndicator}>TODAY</Text>}
+                          {isToday && (
+                            <Text
+                              style={[
+                                styles.todayIndicator,
+                                { backgroundColor: theme.accent },
+                              ]}>
+                              TODAY
+                            </Text>
+                          )}
                         </View>
 
                         <Pressable
@@ -159,7 +187,10 @@ export default function ScheduleScreen() {
                                   }}
                                   style={({ pressed }) => [
                                     styles.labelOption,
-                                    isSelected && styles.labelOptionActive,
+                                    isSelected && [
+                                      styles.labelOptionActive,
+                                      { backgroundColor: theme.accent, borderColor: theme.accent },
+                                    ],
                                     pressed && styles.pressed,
                                   ]}>
                                   <Text
