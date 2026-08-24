@@ -19,6 +19,7 @@ import { Brand, Radius, Spacing, getSplitBadgeColor } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { calculate1RM, formatDate, formatMonthDay, formatSetLine } from '@/lib/utils';
 import { getSessionByDateKey } from '@/lib/workout-sessions';
+import { showAlert } from '@/lib/alert';
 
 export default function WorkoutDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -78,7 +79,7 @@ export default function WorkoutDetailScreen() {
   }
 
   const handleDeleteSession = () => {
-    Alert.alert(
+    showAlert(
       'Delete Workout Session?',
       `Are you sure you want to delete the entire ${session.title} on ${formatMonthDay(session.dateKey)}? This action cannot be undone.`,
       [
@@ -96,7 +97,7 @@ export default function WorkoutDetailScreen() {
   };
 
   const handleDeleteExercise = (logId: string, exerciseName: string) => {
-    Alert.alert(
+    showAlert(
       'Delete Exercise?',
       `Remove ${exerciseName} from this session?`,
       [

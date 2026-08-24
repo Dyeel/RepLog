@@ -21,6 +21,8 @@ import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { groupLogsIntoSessions } from '@/lib/workout-sessions';
 
+import { showAlert } from '@/lib/alert';
+
 export default function HistoryScreen() {
   const { isReady, logs, schedule, unitPreference, deleteSessionByDate } = useWorkoutStore();
   const theme = useTheme();
@@ -39,7 +41,7 @@ export default function HistoryScreen() {
   }, [filter, logs, schedule, unitPreference]);
 
   const handleDeleteSession = (dateKey: string, title: string, dateLabel: string) => {
-    Alert.alert(
+    showAlert(
       'Delete Workout?',
       `Are you sure you want to delete ${title} on ${dateLabel}?`,
       [

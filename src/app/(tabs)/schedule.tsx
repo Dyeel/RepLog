@@ -23,6 +23,8 @@ import { DAY_LABELS, DAYS_OF_WEEK, WORKOUT_LABELS, WorkoutFrequency } from '@/ty
 
 const FREQUENCIES: WorkoutFrequency[] = [2, 3, 4, 5, 6];
 
+import { showAlert } from '@/lib/alert';
+
 export default function ScheduleScreen() {
   const { isReady, frequency, schedule, setFrequency, updateScheduleDay } = useWorkoutStore();
   const theme = useTheme();
@@ -32,7 +34,7 @@ export default function ScheduleScreen() {
   const handleFrequencyChange = (next: WorkoutFrequency) => {
     if (next === frequency) return;
 
-    Alert.alert(
+    showAlert(
       'Reset Routine Split?',
       `Switching to ${next} days/week will apply standard preset splits. Custom days can be edited below.`,
       [

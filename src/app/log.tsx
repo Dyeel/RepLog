@@ -36,6 +36,7 @@ import {
   getPreviousExercisePerformance,
   getTodayDayOfWeek,
 } from '@/lib/utils';
+import { showAlert } from '@/lib/alert';
 import { ExerciseDefinition, SetType, WeightUnit, WorkoutExercise, WorkoutSet } from '@/types';
 
 function createEmptySet(unit: WeightUnit = 'kg', type: SetType = 'normal'): WorkoutSet {
@@ -260,7 +261,7 @@ export default function LogWorkoutScreen() {
   };
 
   const handleDiscard = () => {
-    Alert.alert(
+    showAlert(
       'Discard Workout?',
       'Are you sure you want to end and discard this workout session? Logged sets will not be saved.',
       [
@@ -279,7 +280,7 @@ export default function LogWorkoutScreen() {
 
   const handleFinishWorkout = async () => {
     if (exercises.length === 0) {
-      Alert.alert('No Exercises', 'Please add at least one exercise to save the session.');
+      showAlert('No Exercises', 'Please add at least one exercise to save the session.');
       return;
     }
 
@@ -288,7 +289,7 @@ export default function LogWorkoutScreen() {
     );
 
     if (!hasAnyValidSet) {
-      Alert.alert('Empty Sets', 'Please log at least one set with weight or reps.');
+      showAlert('Empty Sets', 'Please log at least one set with weight or reps.');
       return;
     }
 

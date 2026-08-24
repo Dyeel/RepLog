@@ -28,6 +28,7 @@ import { BottomTabInset, Brand, Radius, Spacing } from '@/constants/theme';
 import { useWorkoutStore } from '@/context/workout-store';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime } from '@/lib/utils';
+import { showAlert } from '@/lib/alert';
 import { WeightUnit, WorkoutFrequency } from '@/types';
 
 const FREQUENCIES: WorkoutFrequency[] = [2, 3, 4, 5, 6];
@@ -70,7 +71,7 @@ export default function ProfileScreen() {
 
   const handleAvatarPress = () => {
     if (profilePhotoUri) {
-      Alert.alert('Profile Photo', 'Update or remove your avatar photo', [
+      showAlert('Profile Photo', 'Update or remove your avatar photo', [
         { text: 'Choose New Photo', onPress: pickImageFromLibrary },
         { text: 'Remove Photo', style: 'destructive', onPress: () => setProfilePhotoUri(null) },
         { text: 'Cancel', style: 'cancel' },
@@ -84,7 +85,7 @@ export default function ProfileScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
+        showAlert(
           'Photo Permission Needed',
           'Please allow access to your photo library to set a custom profile photo.',
         );
@@ -102,7 +103,7 @@ export default function ProfileScreen() {
         await setProfilePhotoUri(result.assets[0].uri);
       }
     } catch (e) {
-      Alert.alert('Error', 'Unable to pick image. Please try again.');
+      showAlert('Error', 'Unable to pick image. Please try again.');
     }
   };
 
@@ -114,7 +115,7 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteEntry = (id: string, weight: number) => {
-    Alert.alert(
+    showAlert(
       'Delete Weight Entry?',
       `Are you sure you want to remove the ${weight} ${unitPreference} entry?`,
       [
